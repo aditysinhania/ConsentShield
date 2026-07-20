@@ -1,0 +1,51 @@
+# Cookie consent dark-pattern rules
+# Each rule: id, name, category, severity (0-1), weight, description, evaluator
+
+rules:
+  - id: cookie.hidden_reject
+    name: Hidden Reject Button
+    category: Cookie Consent Manipulation
+    severity: 0.9
+    weight: 1.2
+    description: Reject / Reject All control is missing, hidden, or visually inaccessible.
+    evaluator: hidden_reject
+
+  - id: cookie.multi_click_reject
+    name: Multi-Click Reject Path
+    category: Cookie Consent Manipulation
+    severity: 0.75
+    weight: 1.0
+    description: Rejecting non-essential cookies requires additional navigations or clicks.
+    evaluator: multi_click_reject
+
+  - id: cookie.accept_visually_dominant
+    name: Accept Button Visually Dominant
+    category: Cookie Consent Manipulation
+    severity: 0.8
+    weight: 1.1
+    description: Accept All is significantly larger, brighter, or more contrasted than Reject.
+    evaluator: accept_visually_dominant
+
+  - id: cookie.unequal_emphasis
+    name: Unequal Visual Emphasis
+    category: Cookie Consent Manipulation
+    severity: 0.7
+    weight: 0.9
+    description: Consent choices use unequal styling that steers users toward acceptance.
+    evaluator: unequal_emphasis
+
+  - id: cookie.preselected_marketing
+    name: Marketing Cookies Pre-Selected
+    category: Cookie Consent Manipulation
+    severity: 0.85
+    weight: 1.1
+    description: Non-essential / marketing cookie categories are enabled by default.
+    evaluator: preselected_marketing
+
+  - id: cookie.banner_obstruction
+    name: Excessive Banner Coverage
+    category: Cookie Consent Manipulation
+    severity: 0.55
+    weight: 0.6
+    description: Cookie banner covers an excessive portion of the viewport.
+    evaluator: banner_obstruction

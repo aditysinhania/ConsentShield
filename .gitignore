@@ -1,0 +1,86 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.env/
+.venv
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# IDE / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs & caches
+logs/
+*.log
+.cache/
+.turbo/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+coverage/
+htmlcov/
+*.coverage
+.eslintcache
+
+# Build outputs
+apps/web/dist/
+apps/extension/dist/
+apps/api/*.egg-info/
+*.tsbuildinfo
+
+# ML artifacts (never commit)
+models/vision/*
+!models/vision/.gitkeep
+models/text/*
+!models/text/.gitkeep
+models/checkpoints/*
+!models/checkpoints/.gitkeep
+*.pt
+*.pth
+*.onnx
+*.pkl
+*.joblib
+*.h5
+*.safetensors
+
+# Runtime storage
+storage/screenshots/*
+!storage/screenshots/.gitkeep
+storage/reports/*
+!storage/reports/.gitkeep
+storage/datasets/*
+!storage/datasets/.gitkeep
+
+# Research data (large / private)
+research/datasets/*
+!research/datasets/.gitkeep
+research/results/*
+!research/results/.gitkeep
+research/notebooks/.ipynb_checkpoints/
+
+# Docker volumes
+docker/data/
+
+# Misc
+*.tmp
+*.temp
+.DS_Store

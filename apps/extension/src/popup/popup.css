@@ -1,0 +1,101 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  --ink: #14213d;
+  --accent: #0b6e4f;
+  --bg: #f7f3eb;
+  --danger: #9b2226;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(160deg, #f7f3eb, #e8f0ea);
+  color: var(--ink);
+}
+
+.shell {
+  width: 340px;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+header p {
+  margin: 4px 0 12px;
+  opacity: 0.75;
+  font-size: 0.85rem;
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+  font-size: 0.75rem;
+  margin-bottom: 10px;
+}
+
+input {
+  border: 1px solid #c9d2c8;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.primary {
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.error {
+  margin-top: 10px;
+  color: var(--danger);
+  font-size: 0.8rem;
+}
+
+.report {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.score {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.score strong {
+  font-size: 2rem;
+}
+
+.category {
+  margin: 0;
+  font-weight: 600;
+}
+
+.meta {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.82rem;
+}

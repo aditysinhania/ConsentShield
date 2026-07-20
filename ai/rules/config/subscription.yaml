@@ -1,0 +1,50 @@
+# Subscription / free-trial dark-pattern rules
+
+rules:
+  - id: sub.auto_renew
+    name: Auto-Renewal Detected
+    category: Hidden Subscription
+    severity: 0.8
+    weight: 1.0
+    description: Auto-renewal or recurring billing language is present but de-emphasized.
+    evaluator: auto_renew
+
+  - id: sub.hidden_billing
+    name: Hidden Billing Information
+    category: Hidden Billing
+    severity: 0.85
+    weight: 1.1
+    description: Billing / recurring charge details are buried relative to the primary CTA.
+    evaluator: hidden_billing
+
+  - id: sub.small_font_disclaimer
+    name: Small-Font Billing Disclaimer
+    category: Hidden Billing
+    severity: 0.7
+    weight: 0.9
+    description: Material billing terms appear in unusually small font relative to body text.
+    evaluator: small_font_disclaimer
+
+  - id: sub.misleading_free_trial
+    name: Misleading Free Trial
+    category: Misleading Free Trial
+    severity: 0.8
+    weight: 1.0
+    description: Free trial language obscures conversion to paid subscription.
+    evaluator: misleading_free_trial
+
+  - id: sub.preselected_plan
+    name: Pre-Selected Subscription Option
+    category: Hidden Subscription
+    severity: 0.65
+    weight: 0.8
+    description: A paid or longer-term plan is pre-selected without clear disclosure.
+    evaluator: preselected_plan
+
+  - id: sub.confirmshaming
+    name: Confirmshaming Language
+    category: Confirmshaming
+    severity: 0.7
+    weight: 0.85
+    description: Decline path uses guilt or shame-inducing language.
+    evaluator: confirmshaming

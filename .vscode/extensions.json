@@ -1,0 +1,7 @@
+{
+  "recommendations": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "python.analysis.extraPaths": ["${workspaceFolder}", "${workspaceFolder}/apps/api"]
+  }
+}

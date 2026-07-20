@@ -1,0 +1,2 @@
+-- Placeholder seed SQL for local demos
+-- Prefer application-level seeds once auth is configured.
