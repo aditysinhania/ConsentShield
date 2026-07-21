@@ -145,5 +145,6 @@ def build_report_document(
             "risk_score": risk_score,
             "category": category,
             "confidence": confidence,
+            "audit_format_version": "1.1",
         },
     )

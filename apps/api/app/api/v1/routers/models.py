@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.core.config import settings
 from app.services.scan_service import get_pipeline
+from ai.registry.model_registry import ModelRegistry
 
 router = APIRouter()
 
@@ -11,21 +12,12 @@ router = APIRouter()
 @router.get("/registry")
 async def model_registry() -> dict:
     pipe = get_pipeline()
+    registry = ModelRegistry.default()
     return {
         "stub_mode": settings.AI_STUB_MODE,
+        "ai_provider": settings.AI_PROVIDER,
+        "interfaces": registry.describe(),
         "modules": [
-            {
-                "name": pipe.vision.name,
-                "version": pipe.vision.version,
-                "ready": pipe.vision.is_ready(),
-                "path": settings.VISION_MODEL_PATH or None,
-            },
-            {
-                "name": pipe.text.name,
-                "version": pipe.text.version,
-                "ready": pipe.text.is_ready(),
-                "path": settings.TEXT_MODEL_PATH or None,
-            },
             {
                 "name": pipe.rules.name,
                 "version": pipe.rules.version,

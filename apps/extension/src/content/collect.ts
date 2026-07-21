@@ -49,9 +49,11 @@ function buildCssSelector(el: Element): string {
         .join("");
       part += cls;
     }
-    const parent = node.parentElement;
+    const parent: Element | null = node.parentElement;
     if (parent) {
-      const same = Array.from(parent.children).filter((c) => c.nodeName === node!.nodeName);
+      const same = Array.from(parent.children).filter(
+        (c: Element) => c.nodeName === node!.nodeName,
+      );
       if (same.length > 1) {
         const idx = same.indexOf(node) + 1;
         part += `:nth-of-type(${idx})`;

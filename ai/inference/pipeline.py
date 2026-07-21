@@ -6,11 +6,11 @@ from ai.common.types import ExplainableReport, FusionInput, ScanPayload
 from ai.explanation.generator import ExplanationGenerator
 from ai.fusion.aggregator.fusion_engine import FusionEngine
 from ai.performance.metrics import MetricStage, PerformanceCollector
+from ai.performance.instrumentation import PerformanceInstrumentation
+from ai.registry.model_registry import ModelRegistry
 from ai.report.enricher import enrich_report
 from ai.rules import RuleEngine
-from ai.text.classifier.text_classifier import TextClassifier
 from ai.timeline.recorder import TimelineEventName, TimelineRecorder
-from ai.vision.detectors.vision_detector import VisionDetector
 
 
 def _detect_banner_cmp(payload: ScanPayload, timeline: TimelineRecorder) -> None:
@@ -37,10 +37,11 @@ class InferencePipeline:
     Chrome Extension payload → Rules + Vision stub + Text stub → Fusion → Explanation.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, registry: ModelRegistry | None = None) -> None:
+        self.registry = registry or ModelRegistry.default()
         self.rules = RuleEngine()
-        self.vision = VisionDetector()
-        self.text = TextClassifier()
+        self.vision = self.registry.vision
+        self.text = self.registry.text
         self.fusion = FusionEngine()
         self.explainer = ExplanationGenerator()
 
@@ -52,7 +53,7 @@ class InferencePipeline:
         metrics: PerformanceCollector | None = None,
     ) -> ExplainableReport:
         tl = timeline or TimelineRecorder()
-        perf = metrics or PerformanceCollector()
+        perf = metrics or PerformanceInstrumentation()
 
         if not any(e.event == TimelineEventName.PAGE_LOADED for e in tl.events()):
             tl.mark(
@@ -66,8 +67,10 @@ class InferencePipeline:
             rule_result = self.rules.evaluate_payload(payload)
         tl.mark(TimelineEventName.RULE_ENGINE, metadata={"hits": len(rule_result.hits)})
 
-        vision_features = self.vision.extract_features(payload)
-        text_pred = self.text.classify(payload)
+        with perf.measure("vision"):
+            vision_features = self.vision.extract_features(payload)
+        with perf.measure("text"):
+            text_pred = self.text.classify(payload)
 
         with perf.measure(MetricStage.FUSION):
             fusion_out = self.fusion.fuse(
@@ -93,9 +96,11 @@ class InferencePipeline:
 
         perf.set(MetricStage.LLM, 0.0)
 
+        perf_payload = perf.finalize() if isinstance(perf, PerformanceInstrumentation) else perf.to_dict()
+
         return report.model_copy(
             update={
                 "timeline": tl.to_list(),
-                "performance": perf.to_dict(),
+                "performance": perf_payload,
             }
         )

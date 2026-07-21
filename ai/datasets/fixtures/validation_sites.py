@@ -22,6 +22,7 @@ def _btn(
 ) -> dict:
     return {
         "text": text,
+        "tagName": "button",
         "ariaLabel": aria,
         "width": width,
         "height": height,

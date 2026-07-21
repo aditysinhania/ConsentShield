@@ -17,6 +17,8 @@ class AccessibilityIssueType(str, Enum):
     KEYBOARD_ISSUE = "keyboard_issue"
     FOCUS_TRAP = "focus_trap"
     MISSING_ARIA = "missing_aria"
+    MISSING_ROLE = "missing_role"
+    TABINDEX_MISSING = "tabindex_missing"
     OVERLAY_BLOCKING = "overlay_blocking"
 
 
@@ -158,6 +160,54 @@ def analyze_accessibility(payload: ScanPayload) -> AccessibilityReport:
                     xpath=xpath,
                     css_selector=selector,
                     metadata={"display": display, "visibility": visibility},
+                )
+            )
+
+        # Custom interactive element missing role
+        role = str(btn.get("role", "") or "").lower()
+        tag_hint = str(btn.get("tagName", "") or btn.get("tag", "")).lower()
+        if (
+            not role
+            and tag_hint not in ("button", "input", "a")
+            and width > 0
+            and height > 0
+            and display not in ("none", "")
+            and visibility != "hidden"
+        ):
+            issues.append(
+                AccessibilityIssue(
+                    type=AccessibilityIssueType.MISSING_ROLE,
+                    severity=0.6,
+                    description=(
+                        f"Interactive control '{label or 'unnamed'}' lacks an explicit ARIA role."
+                    ),
+                    element_label=label or None,
+                    xpath=xpath,
+                    css_selector=selector,
+                    metadata={"tag": tag_hint or "unknown"},
+                )
+            )
+
+        # tabindex not keyboard reachable when hidden off-screen pattern
+        tabindex = btn.get("tabindex")
+        if (
+            tabindex is not None
+            and str(tabindex) == "-1"
+            and label
+            and display != "none"
+            and opacity >= 0.15
+        ):
+            issues.append(
+                AccessibilityIssue(
+                    type=AccessibilityIssueType.TABINDEX_MISSING,
+                    severity=0.55,
+                    description=(
+                        f"Control '{label}' uses tabindex=-1 and may be excluded from tab order."
+                    ),
+                    element_label=label,
+                    xpath=xpath,
+                    css_selector=selector,
+                    metadata={"tabindex": tabindex},
                 )
             )
 

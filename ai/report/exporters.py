@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from ai.report.document import ReportDocument
+from ai.report.formatting import AUDIT_CSS, audit_header_html, evidence_detail_html
 
 try:
     from reportlab.lib import colors
@@ -123,18 +124,13 @@ def export_html(document: ReportDocument) -> str:
         else:
             findings_html += f"<li><code>{_esc(f.get('rule_id'))}</code> — {_esc(f.get('statement'))}</li>"
 
-    evidence_html = ""
-    for ev in document.evidence:
-        evidence_html += f"""<article class="evidence">
-<h3>{_esc(ev.get('rule_id') or ev.get('id'))}</h3>
-<p><strong>Statement:</strong> {_esc(ev.get('statement'))}</p>
-<p><strong>Explanation:</strong> {_esc(ev.get('explanation'))}</p>
-<p><strong>Recommendation:</strong> {_esc(ev.get('recommendation'))}</p>
-</article>"""
+    evidence_html = "".join(evidence_detail_html(ev) for ev in document.evidence)
 
     a11y = document.accessibility or {}
     a11y_html = "".join(
-        f"<li><code>{_esc(i.get('type'))}</code> — {_esc(i.get('description'))}</li>"
+        f"<tr><td><code>{_esc(i.get('type'))}</code></td>"
+        f"<td>{_esc(i.get('description'))}</td>"
+        f"<td>{_esc(i.get('element_label') or '—')}</td></tr>"
         for i in (a11y.get("issues") or [])
     )
 
@@ -146,7 +142,8 @@ def export_html(document: ReportDocument) -> str:
 
     perf = document.performance or {}
     perf_rows = "".join(
-        f"<tr><td>{_esc(k)}</td><td>{_esc(perf.get(k))} ms</td></tr>"
+        f"<tr><td>{_esc(k.replace('_', ' '))}</td><td>{_esc(perf.get(k))} ms</td>"
+        f"<td>{_esc((perf.get('percent_of_total') or {}).get(k.replace('_ms', ''), '—'))}</td></tr>"
         for k in (
             "collection_ms",
             "rule_engine_ms",
@@ -161,53 +158,49 @@ def export_html(document: ReportDocument) -> str:
     )
 
     rec_html = "".join(f"<li>{_esc(r)}</li>" for r in document.recommendations)
+    narrator_note = ""
+    if document.narrator:
+        narrator_note = (
+            f'<p class="meta">Narrator: {_esc(document.narrator.get("source"))} · '
+            f'{_esc(document.narrator.get("status"))}</p>'
+        )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>ConsentShield Report — {_esc(document.url)}</title>
-<style>
-body {{ font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }}
-header {{ border-bottom: 2px solid #2d6a4f; padding-bottom: 1rem; margin-bottom: 2rem; }}
-h1 {{ color: #2d6a4f; margin: 0; }}
-h2 {{ color: #1b4332; margin-top: 2rem; }}
-.meta {{ color: #555; font-size: 0.95rem; }}
-.evidence {{ border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin: 1rem 0; }}
-table {{ border-collapse: collapse; width: 100%; }}
-th, td {{ border: 1px solid #ddd; padding: 0.5rem; text-align: left; }}
-th {{ background: #f4f4f4; }}
-footer {{ margin-top: 3rem; font-size: 0.85rem; color: #666; }}
-</style>
+<title>ConsentShield Audit — {_esc(document.url)}</title>
+<style>{AUDIT_CSS}</style>
 </head>
 <body>
-<header>
-<h1>ConsentShield Audit Report</h1>
-<p class="meta">URL: {_esc(document.url)} · Scan: {_esc(document.scan_id)} · Generated: {_esc(document.generated_at)}</p>
-</header>
-<section id="executive-summary"><h2>Executive Summary</h2><p>{_esc(document.executive_summary)}</p>
-{f'<p class="meta">Narrator: {_esc(document.narrator.get("source"))} · {_esc(document.narrator.get("status"))}</p>' if document.narrator else ''}
-</section>
-<section id="findings"><h2>Findings</h2><ul>{findings_html or '<li>No findings.</li>'}</ul></section>
-<section id="evidence"><h2>Evidence</h2>{evidence_html or '<p>No evidence items.</p>'}</section>
-<section id="screenshots"><h2>Screenshots</h2>
+{audit_header_html(document)}
+<section id="executive-summary"><h2><span class="section-num">1.</span>Executive Summary</h2>
+<p>{_esc(document.executive_summary)}</p>{narrator_note}</section>
+<section id="findings"><h2><span class="section-num">2.</span>Findings</h2>
+<ul>{findings_html or '<li>No findings.</li>'}</ul></section>
+<section id="evidence"><h2><span class="section-num">3.</span>Evidence</h2>
+{evidence_html or '<p>No evidence items.</p>'}</section>
+<section id="screenshots"><h2><span class="section-num">4.</span>Screenshots</h2>
 <ul>
 <li>Raw: <code>{_esc(document.screenshots.get('raw'))}</code></li>
 <li>Annotated: <code>{_esc(document.screenshots.get('annotated'))}</code></li>
 </ul></section>
-<section id="accessibility"><h2>Accessibility</h2><p>Issues: <strong>{_esc(a11y.get('issue_count', 0))}</strong></p><ul>{a11y_html or '<li>None detected.</li>'}</ul></section>
-<section id="timeline"><h2>Timeline</h2>
-<table><thead><tr><th>Event</th><th>Timestamp</th><th>Duration (ms)</th></tr></thead>
+<section id="accessibility"><h2><span class="section-num">5.</span>Accessibility</h2>
+<p>Issues: <strong>{_esc(a11y.get('issue_count', 0))}</strong></p>
+<table class="data"><thead><tr><th>Type</th><th>Description</th><th>Element</th></tr></thead>
+<tbody>{a11y_html or '<tr><td colspan="3">None detected.</td></tr>'}</tbody></table></section>
+<section id="timeline"><h2><span class="section-num">6.</span>Timeline</h2>
+<table class="data"><thead><tr><th>Event</th><th>Timestamp</th><th>Duration (ms)</th></tr></thead>
 <tbody>{timeline_html or '<tr><td colspan="3">No events.</td></tr>'}</tbody></table></section>
-<section id="performance"><h2>Performance</h2>
-<table><thead><tr><th>Stage</th><th>Duration</th></tr></thead>
-<tbody>{perf_rows or '<tr><td colspan="2">No metrics.</td></tr>'}</tbody></table></section>
-<section id="recommendations"><h2>Recommendations</h2><ul>{rec_html or '<li>None.</li>'}</ul></section>
-<section id="appendix"><h2>Appendix</h2>
+<section id="performance"><h2><span class="section-num">7.</span>Performance</h2>
+<table class="data"><thead><tr><th>Stage</th><th>Duration</th><th>% Total</th></tr></thead>
+<tbody>{perf_rows or '<tr><td colspan="3">No metrics.</td></tr>'}</tbody></table></section>
+<section id="recommendations"><h2><span class="section-num">8.</span>Recommendations</h2>
+<ul>{rec_html or '<li>None.</li>'}</ul></section>
+<section id="appendix" class="appendix"><h2><span class="section-num">9.</span>Appendix</h2>
 <p>Rule traces: {len(document.appendix.get('rule_traces') or [])} · Pipeline notes: {len(document.appendix.get('pipeline_notes') or [])}</p>
-<pre>{_esc(json.dumps(document.appendix, indent=2, default=str)[:8000])}</pre>
-</section>
-<footer>Generated by ConsentShield — deterministic rule-based consent audit.</footer>
+<pre>{_esc(json.dumps(document.appendix, indent=2, default=str)[:8000])}</pre></section>
+<footer class="audit-footer">ConsentShield deterministic consent audit · Report format v1.1 · Rules are the source of truth.</footer>
 </body>
 </html>"""
 

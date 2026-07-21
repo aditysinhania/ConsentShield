@@ -95,20 +95,38 @@ def _draw_box(
     font: Any,
     confidence: float | None = None,
     severity: str | None = None,
+    callout: int | None = None,
 ) -> None:
     x1, y1, x2, y2 = box
     outline = color[:3]
-    draw.rectangle([x1, y1, x2, y2], outline=outline, width=3)
-    overlay = color[:3] + (40,)
+    width = 4 if severity in ("HIGH", "CRITICAL") else 3 if severity == "MEDIUM" else 2
+
+    # Corner brackets
+    arm = min(14, int((x2 - x1) * 0.15), int((y2 - y1) * 0.15))
+    for cx, cy, dx, dy in (
+        (x1, y1, 1, 1),
+        (x2, y1, -1, 1),
+        (x1, y2, 1, -1),
+        (x2, y2, -1, -1),
+    ):
+        draw.line([(cx, cy), (cx + dx * arm, cy)], fill=outline, width=width)
+        draw.line([(cx, cy), (cx, cy + dy * arm)], fill=outline, width=width)
+
+    draw.rectangle([x1, y1, x2, y2], outline=outline, width=width)
+    overlay = color[:3] + (35,)
     draw.rectangle([x1, y1, x2, y2], fill=overlay)
+
     parts = [label]
+    if callout is not None:
+        parts.insert(0, f"#{callout}")
     if confidence is not None:
         parts.append(f"conf {confidence:.0%}")
     if severity:
         parts.append(severity)
     text = " · ".join(parts)
-    text_y = max(y1 - 18, 4)
-    draw.rectangle([x1, text_y - 2, x1 + min(len(text) * 7 + 12, 420), text_y + 16], fill=outline)
+    text_y = max(y1 - 20, 4)
+    badge_w = min(len(text) * 7 + 16, 440)
+    draw.rectangle([x1, text_y - 2, x1 + badge_w, text_y + 17], fill=outline)
     draw.text((x1 + 4, text_y), text, fill=(255, 255, 255), font=font)
 
 
@@ -191,14 +209,32 @@ def annotate_screenshot(
     else:
         base = Image.new("RGBA", (width, height), (245, 245, 245, 255))
 
-    overlay = Image.new("RGBA", base.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay)
     font = _default_font(13)
     small = _default_font(11)
 
-    for kind, box, label, conf, sev in _collect_regions(payload, report):
+    regions = _collect_regions(payload, report)
+
+    # Header strip with audit summary
+    header_h = 28
+    header = Image.new("RGBA", (base.width, header_h), (0, 0, 0, 0))
+    hdraw = ImageDraw.Draw(header)
+    hdraw.rectangle([0, 0, base.width, header_h], fill=(27, 67, 50, 230))
+    header_text = f"ConsentShield Annotated Audit · Risk {report.risk_score:.0f} · {len(regions)} region(s)"
+    hdraw.text((10, 6), header_text, fill=(255, 255, 255), font=small)
+    base_with_header = Image.new("RGBA", (base.width, base.height + header_h), (0, 0, 0, 0))
+    base_with_header.paste(header, (0, 0))
+    base_with_header.paste(base, (0, header_h))
+    base = base_with_header
+
+    overlay = Image.new("RGBA", base.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+    shifted_regions = [
+        (kind, (box[0], box[1] + header_h, box[2], box[3] + header_h), label, conf, sev)
+        for kind, box, label, conf, sev in regions
+    ]
+    for idx, (kind, box, label, conf, sev) in enumerate(shifted_regions, start=1):
         color = _COLORS.get(kind, _COLORS["dark_pattern"])
-        _draw_box(draw, box, color, label, font=font, confidence=conf, severity=sev)
+        _draw_box(draw, box, color, label, font=font, confidence=conf, severity=sev, callout=idx)
 
     # Legend panel (top-right)
     lx, ly = base.width - 210, 12

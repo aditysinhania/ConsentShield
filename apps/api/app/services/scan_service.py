@@ -19,6 +19,7 @@ if str(_ROOT) not in sys.path:
 from ai.common.types import ScanPayload
 from ai.inference.pipeline import InferencePipeline
 from ai.narrator.narrator import LLMNarrator
+from ai.performance.instrumentation import PerformanceInstrumentation
 from ai.performance.metrics import MetricStage, PerformanceCollector
 from ai.report.generator import generate_all_formats, generate_report_document
 from ai.screenshots.annotator import annotate_screenshot
@@ -57,7 +58,7 @@ async def create_and_process_scan(
     payload: ScanPayload,
     user_id: uuid.UUID | None,
 ) -> WebsiteScan:
-    perf = PerformanceCollector()
+    perf = PerformanceInstrumentation()
     perf.start_total()
     timeline = TimelineRecorder()
 
@@ -109,10 +110,13 @@ async def create_and_process_scan(
     total_ms = perf.finish_total()
     timeline.mark(TimelineEventName.REPORT, metadata={"total_ms": total_ms})
 
+    perf_data = perf.finalize()
+    perf_data["llm_ms"] = perf_data.get("llm_ms", 0.0)
+
     report = report.model_copy(
         update={
             "timeline": timeline.to_list(),
-            "performance": perf.to_dict(),
+            "performance": perf_data,
             "annotated_screenshot_path": annotated_path,
         }
     )

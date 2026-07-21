@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from ai.common.types import EvidenceItem, RuleResult, ScanPayload
-from ai.evidence.enrichment import enrich_evidence_item
+from ai.evidence.quality import apply_evidence_quality
 from ai.explanation.catalog import explanation_for_rule
 
 
@@ -26,7 +26,7 @@ def evidence_from_rules(
             gdpr_relevance=expl.gdpr_relevance,
             recommendation=expl.recommendation,
         )
-        if payload is not None:
-            item = enrich_evidence_item(item, payload)
         items.append(item)
+    if payload is not None:
+        return apply_evidence_quality(items, payload)
     return items
