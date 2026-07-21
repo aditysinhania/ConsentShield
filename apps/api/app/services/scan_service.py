@@ -19,6 +19,7 @@ if str(_ROOT) not in sys.path:
 from ai.common.types import ScanPayload
 from ai.inference.pipeline import InferencePipeline
 from ai.performance.metrics import MetricStage, PerformanceCollector
+from ai.report.generator import generate_all_formats, generate_report_document
 from ai.screenshots.annotator import annotate_screenshot
 from ai.timeline.recorder import TimelineEventName, TimelineRecorder
 
@@ -115,6 +116,23 @@ async def create_and_process_scan(
         }
     )
 
+    report_payload = report.model_dump()
+    try:
+        doc = generate_report_document(
+            scan_id=str(scan.id),
+            url=scan.url,
+            title=scan.title,
+            risk_score=report.risk_score,
+            category=report.category.value,
+            confidence=report.confidence,
+            report=report_payload,
+            screenshot_path=shot_path,
+            annotated_screenshot_path=annotated_path,
+        )
+        report_payload["export_paths"] = generate_all_formats(doc, Path(settings.REPORTS_DIR))
+    except Exception:
+        report_payload["export_paths"] = {}
+
     db.add(
         RuleEngineResult(
             scan_id=scan.id,
@@ -168,7 +186,7 @@ async def create_and_process_scan(
             category=report.category.value,
             risk_score=report.risk_score,
             confidence=report.confidence,
-            report=report.model_dump(),
+            report=report_payload,
         )
     )
 
