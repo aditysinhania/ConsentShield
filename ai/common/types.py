@@ -175,6 +175,9 @@ class ExplainableReport(BaseModel):
     confidence_breakdown: ConfidenceBreakdown | None = None
     evidence: list[EvidenceItem] = Field(default_factory=list)
     rule_traces: list[RuleTrace] = Field(default_factory=list)
+    severity: dict[str, Any] | None = None
+    pattern_clusters: list[dict[str, Any]] = Field(default_factory=list)
+    accessibility: dict[str, Any] | None = None
     vision: VisionFeatures | None = None
     text: TextPrediction | None = None
     rules: RuleResult | None = None

@@ -61,6 +61,9 @@ class ReportOut(BaseModel):
     confidence_breakdown: dict | None = None
     evidence: list[dict]
     rule_traces: list[dict] = []
+    severity: dict | None = None
+    pattern_clusters: list[dict] = []
+    accessibility: dict | None = None
     vision: dict | None = None
     text: dict | None = None
     rules: dict | None = None

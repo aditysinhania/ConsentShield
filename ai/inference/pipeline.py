@@ -5,6 +5,7 @@ from __future__ import annotations
 from ai.common.types import ExplainableReport, FusionInput, ScanPayload
 from ai.explanation.generator import ExplanationGenerator
 from ai.fusion.aggregator.fusion_engine import FusionEngine
+from ai.report.enricher import enrich_report
 from ai.rules import RuleEngine
 from ai.text.classifier.text_classifier import TextClassifier
 from ai.vision.detectors.vision_detector import VisionDetector
@@ -35,10 +36,11 @@ class InferencePipeline:
                 dom_features=payload.css_snapshot or {},
             )
         )
-        return self.explainer.generate(
+        report = self.explainer.generate(
             fusion_out,
             rules=rule_result,
             vision=vision_features,
             text=text_pred,
             payload=payload,
         )
+        return enrich_report(report, payload=payload, fusion=fusion_out)

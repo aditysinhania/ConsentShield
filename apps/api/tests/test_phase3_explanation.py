@@ -169,7 +169,12 @@ def test_pipeline_wires_phase3_fields():
     assert report.rule_traces
     assert any(e.explanation for e in report.evidence)
     assert any(e.url for e in report.evidence)
+    assert report.severity is not None
+    assert report.accessibility is not None
     dumped = report.model_dump()
     assert "confidence_breakdown" in dumped
     assert "rule_traces" in dumped
+    assert "severity" in dumped
+    assert "pattern_clusters" in dumped
+    assert "accessibility" in dumped
     assert dumped["evidence"][0].get("explanation")
