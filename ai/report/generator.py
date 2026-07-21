@@ -20,6 +20,7 @@ def generate_report_document(
     report: dict[str, Any],
     screenshot_path: str | None = None,
     annotated_screenshot_path: str | None = None,
+    narrator: dict[str, Any] | None = None,
 ) -> ReportDocument:
     return build_report_document(
         scan_id=scan_id,
@@ -31,6 +32,7 @@ def generate_report_document(
         report=report,
         screenshot_path=screenshot_path,
         annotated_screenshot_path=annotated_screenshot_path,
+        narrator=narrator,
     )
 
 

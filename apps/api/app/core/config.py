@@ -28,6 +28,12 @@ class Settings(BaseSettings):
     FUSION_MODEL_PATH: str = ""
     AI_STUB_MODE: bool = True
 
+    AI_PROVIDER: str = "offline"
+    GEMINI_API_KEY: str = ""
+    OPENAI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.0-flash"
+    OPENAI_MODEL: str = "gpt-4o-mini"
+
     API_V1_PREFIX: str = "/api/v1"
 
     @property

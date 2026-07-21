@@ -18,6 +18,7 @@ if str(_ROOT) not in sys.path:
 
 from ai.common.types import ScanPayload
 from ai.inference.pipeline import InferencePipeline
+from ai.narrator.narrator import LLMNarrator
 from ai.performance.metrics import MetricStage, PerformanceCollector
 from ai.report.generator import generate_all_formats, generate_report_document
 from ai.screenshots.annotator import annotate_screenshot
@@ -117,6 +118,19 @@ async def create_and_process_scan(
     )
 
     report_payload = report.model_dump()
+
+    narrator = LLMNarrator.from_env(
+        provider=settings.AI_PROVIDER,
+        gemini_api_key=settings.GEMINI_API_KEY,
+        openai_api_key=settings.OPENAI_API_KEY,
+    )
+    narrator_result = narrator.narrate(report_payload, url=scan.url)
+    report_payload["narrator"] = narrator_result.model_dump()
+    perf_data = dict(report_payload.get("performance") or {})
+    perf_data["llm_ms"] = narrator_result.duration_ms
+    perf_data.setdefault("stages", {})["llm"] = narrator_result.duration_ms
+    report_payload["performance"] = perf_data
+
     try:
         doc = generate_report_document(
             scan_id=str(scan.id),
@@ -128,6 +142,7 @@ async def create_and_process_scan(
             report=report_payload,
             screenshot_path=shot_path,
             annotated_screenshot_path=annotated_path,
+            narrator=report_payload["narrator"],
         )
         report_payload["export_paths"] = generate_all_formats(doc, Path(settings.REPORTS_DIR))
     except Exception:

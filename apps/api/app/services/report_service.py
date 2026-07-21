@@ -59,6 +59,7 @@ def build_document_from_context(
         report=ctx["report"],
         screenshot_path=screenshot_path,
         annotated_screenshot_path=annotated_path,
+        narrator=ctx["report"].get("narrator"),
     )
 
 

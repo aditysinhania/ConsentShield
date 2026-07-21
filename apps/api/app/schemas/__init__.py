@@ -75,6 +75,7 @@ class ReportOut(BaseModel):
     screenshot_path: str | None = None
     annotated_screenshot_path: str | None = None
     export_paths: dict[str, str] | None = None
+    narrator: dict | None = None
 
 
 class FeedbackCreate(BaseModel):

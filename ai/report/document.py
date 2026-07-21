@@ -14,6 +14,7 @@ class ReportDocument(BaseModel):
     title: str | None = None
     generated_at: str
     executive_summary: str
+    narrator: dict[str, Any] | None = None
     findings: list[dict[str, Any]] = Field(default_factory=list)
     evidence: list[dict[str, Any]] = Field(default_factory=list)
     screenshots: dict[str, str | None] = Field(default_factory=dict)
@@ -97,6 +98,7 @@ def build_report_document(
     report: dict[str, Any],
     screenshot_path: str | None = None,
     annotated_screenshot_path: str | None = None,
+    narrator: dict[str, Any] | None = None,
 ) -> ReportDocument:
     ctx = {
         "scan_id": scan_id,
@@ -107,12 +109,20 @@ def build_report_document(
         "confidence": confidence,
         "report": report,
     }
+    narrator_data = narrator or report.get("narrator")
+    exec_summary = (
+        narrator_data.get("summary")
+        if narrator_data and narrator_data.get("summary")
+        else _executive_summary(ctx)
+    )
+
     return ReportDocument(
         scan_id=scan_id,
         url=url,
         title=title,
         generated_at=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
-        executive_summary=_executive_summary(ctx),
+        executive_summary=exec_summary,
+        narrator=narrator_data,
         findings=_findings(report),
         evidence=list(report.get("evidence") or []),
         screenshots={

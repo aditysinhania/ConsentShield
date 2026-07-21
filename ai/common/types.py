@@ -182,6 +182,7 @@ class ExplainableReport(BaseModel):
     timeline: list[dict[str, Any]] = Field(default_factory=list)
     performance: dict[str, Any] | None = None
     annotated_screenshot_path: str | None = None
+    narrator: dict[str, Any] | None = None
     vision: VisionFeatures | None = None
     text: TextPrediction | None = None
     rules: RuleResult | None = None

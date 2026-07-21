@@ -36,9 +36,21 @@ def export_markdown(document: ReportDocument) -> str:
         "",
         document.executive_summary,
         "",
+    ]
+    if document.narrator:
+        lines.extend(
+            [
+                f"_Narrator source: `{document.narrator.get('source')}` · "
+                f"status: `{document.narrator.get('status')}`_",
+                "",
+            ]
+        )
+    lines.extend(
+        [
         "## Findings",
         "",
     ]
+    )
     if document.findings:
         for f in document.findings:
             if f.get("type") == "cluster":
@@ -173,7 +185,9 @@ footer {{ margin-top: 3rem; font-size: 0.85rem; color: #666; }}
 <h1>ConsentShield Audit Report</h1>
 <p class="meta">URL: {_esc(document.url)} · Scan: {_esc(document.scan_id)} · Generated: {_esc(document.generated_at)}</p>
 </header>
-<section id="executive-summary"><h2>Executive Summary</h2><p>{_esc(document.executive_summary)}</p></section>
+<section id="executive-summary"><h2>Executive Summary</h2><p>{_esc(document.executive_summary)}</p>
+{f'<p class="meta">Narrator: {_esc(document.narrator.get("source"))} · {_esc(document.narrator.get("status"))}</p>' if document.narrator else ''}
+</section>
 <section id="findings"><h2>Findings</h2><ul>{findings_html or '<li>No findings.</li>'}</ul></section>
 <section id="evidence"><h2>Evidence</h2>{evidence_html or '<p>No evidence items.</p>'}</section>
 <section id="screenshots"><h2>Screenshots</h2>
