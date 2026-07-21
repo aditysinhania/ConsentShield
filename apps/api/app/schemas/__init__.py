@@ -40,6 +40,7 @@ class ScanCreate(BaseModel):
     viewport: dict[str, int] | None = None
     scroll_position: dict[str, int] | None = None
     collected_at: str | None = None
+    collection_duration_ms: float | None = None
 
 
 class ScanOut(BaseModel):
@@ -64,12 +65,15 @@ class ReportOut(BaseModel):
     severity: dict | None = None
     pattern_clusters: list[dict] = []
     accessibility: dict | None = None
+    timeline: list[dict] = []
+    performance: dict | None = None
     vision: dict | None = None
     text: dict | None = None
     rules: dict | None = None
     fusion: dict | None = None
     pipeline_notes: list[str] = []
     screenshot_path: str | None = None
+    annotated_screenshot_path: str | None = None
 
 
 class FeedbackCreate(BaseModel):

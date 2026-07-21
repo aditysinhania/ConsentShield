@@ -105,6 +105,7 @@ class ScanPayload(BaseModel):
     viewport: dict[str, int] | None = None
     scroll_position: dict[str, int] | None = None
     collected_at: str | None = None
+    collection_duration_ms: float | None = None
 
 
 class VisionFeatures(BaseModel):
@@ -178,6 +179,9 @@ class ExplainableReport(BaseModel):
     severity: dict[str, Any] | None = None
     pattern_clusters: list[dict[str, Any]] = Field(default_factory=list)
     accessibility: dict[str, Any] | None = None
+    timeline: list[dict[str, Any]] = Field(default_factory=list)
+    performance: dict[str, Any] | None = None
+    annotated_screenshot_path: str | None = None
     vision: VisionFeatures | None = None
     text: TextPrediction | None = None
     rules: RuleResult | None = None

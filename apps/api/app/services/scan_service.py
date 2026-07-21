@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import sys
+import time
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -17,6 +18,9 @@ if str(_ROOT) not in sys.path:
 
 from ai.common.types import ScanPayload
 from ai.inference.pipeline import InferencePipeline
+from ai.performance.metrics import MetricStage, PerformanceCollector
+from ai.screenshots.annotator import annotate_screenshot
+from ai.timeline.recorder import TimelineEventName, TimelineRecorder
 
 from app.core.config import settings
 from app.models.detection import DetectedPattern, ModelPrediction, RuleEngineResult
@@ -32,16 +36,17 @@ def get_pipeline() -> InferencePipeline:
     return _pipeline
 
 
-def _save_screenshot(scan_id: uuid.UUID, b64: str | None) -> str | None:
+def _save_screenshot(scan_id: uuid.UUID, b64: str | None) -> tuple[str | None, float]:
     if not b64:
-        return None
+        return None, 0.0
+    t0 = time.perf_counter()
     raw = b64.split(",", 1)[-1] if "," in b64 else b64
     data = base64.b64decode(raw)
     out_dir = Path(settings.SCREENSHOTS_DIR)
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"{scan_id}.png"
     path.write_bytes(data)
-    return str(path)
+    return str(path), (time.perf_counter() - t0) * 1000.0
 
 
 async def create_and_process_scan(
@@ -50,6 +55,21 @@ async def create_and_process_scan(
     payload: ScanPayload,
     user_id: uuid.UUID | None,
 ) -> WebsiteScan:
+    perf = PerformanceCollector()
+    perf.start_total()
+    timeline = TimelineRecorder()
+
+    if payload.collection_duration_ms is not None:
+        perf.set(MetricStage.COLLECTION, float(payload.collection_duration_ms))
+    else:
+        perf.set(MetricStage.COLLECTION, 0.0)
+
+    timeline.mark(
+        TimelineEventName.PAGE_LOADED,
+        at=payload.collected_at,
+        duration_ms=0.0,
+    )
+
     scan = WebsiteScan(
         user_id=user_id,
         url=payload.url,
@@ -62,11 +82,38 @@ async def create_and_process_scan(
     db.add(scan)
     await db.flush()
 
-    shot_path = _save_screenshot(scan.id, payload.screenshot_base64)
+    shot_path, screenshot_ms = _save_screenshot(scan.id, payload.screenshot_base64)
+    perf.set(MetricStage.SCREENSHOT, screenshot_ms)
     if shot_path:
         db.add(Screenshot(scan_id=scan.id, storage_path=shot_path))
 
-    report = get_pipeline().run(payload)
+    report = get_pipeline().run(payload, timeline=timeline, metrics=perf)
+
+    annotated_path: str | None = None
+    t_ann = time.perf_counter()
+    try:
+        out_ann = Path(settings.SCREENSHOTS_DIR) / f"{scan.id}_annotated.png"
+        annotate_screenshot(
+            source_path=shot_path,
+            output_path=out_ann,
+            payload=payload,
+            report=report,
+        )
+        annotated_path = str(out_ann)
+    except Exception:
+        annotated_path = None
+    perf.set(MetricStage.ANNOTATION, (time.perf_counter() - t_ann) * 1000.0)
+
+    total_ms = perf.finish_total()
+    timeline.mark(TimelineEventName.REPORT, metadata={"total_ms": total_ms})
+
+    report = report.model_copy(
+        update={
+            "timeline": timeline.to_list(),
+            "performance": perf.to_dict(),
+            "annotated_screenshot_path": annotated_path,
+        }
+    )
 
     db.add(
         RuleEngineResult(

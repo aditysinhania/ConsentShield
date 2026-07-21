@@ -112,6 +112,7 @@ export interface ScanPayload {
   viewport?: { width: number; height: number } | null;
   scroll_position?: { x: number; y: number } | null;
   collected_at?: string | null;
+  collection_duration_ms?: number | null;
 }
 
 export interface ExplainableReport {
@@ -122,12 +123,18 @@ export interface ExplainableReport {
   confidence_breakdown?: ConfidenceBreakdown | null;
   evidence: EvidenceItem[];
   rule_traces?: RuleTrace[];
+  severity?: Record<string, unknown> | null;
+  pattern_clusters?: Array<Record<string, unknown>>;
+  accessibility?: Record<string, unknown> | null;
+  timeline?: Array<Record<string, unknown>>;
+  performance?: Record<string, unknown> | null;
   vision?: Record<string, unknown> | null;
   text?: Record<string, unknown> | null;
   rules?: Record<string, unknown> | null;
   fusion?: Record<string, unknown> | null;
   pipeline_notes?: string[];
   screenshot_path?: string | null;
+  annotated_screenshot_path?: string | null;
 }
 
 export interface ScanSummary {

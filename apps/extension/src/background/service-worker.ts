@@ -15,13 +15,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           },
         });
 
+        const collectStart = performance.now();
         const collected = await chrome.tabs.sendMessage(tabId, { type: "COLLECT_PAGE" });
         if (!collected?.ok) throw new Error(collected?.error || "Collection failed");
+        const collectionDurationMs = performance.now() - collectStart;
 
         const dataUrl = await chrome.tabs.captureVisibleTab({ format: "png" });
         const payload = {
           ...collected.data,
           screenshot_base64: dataUrl,
+          collection_duration_ms: collectionDurationMs,
         };
 
         const provider = await getProvider();

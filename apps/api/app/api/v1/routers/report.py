@@ -34,10 +34,13 @@ async def get_report(scan_id: UUID, db: AsyncSession = Depends(get_db)) -> Repor
         severity=report.get("severity"),
         pattern_clusters=report.get("pattern_clusters", []),
         accessibility=report.get("accessibility"),
+        timeline=report.get("timeline", []),
+        performance=report.get("performance"),
         vision=report.get("vision"),
         text=report.get("text"),
         rules=report.get("rules"),
         fusion=report.get("fusion"),
         pipeline_notes=report.get("pipeline_notes", []),
         screenshot_path=screenshot.storage_path if screenshot else None,
+        annotated_screenshot_path=report.get("annotated_screenshot_path"),
     )

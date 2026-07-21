@@ -32,6 +32,7 @@ async def create_scan(
         viewport=body.viewport,
         scroll_position=body.scroll_position,
         collected_at=body.collected_at,
+        collection_duration_ms=body.collection_duration_ms,
     )
     return await create_and_process_scan(
         db, payload=payload, user_id=user.id if user else None
