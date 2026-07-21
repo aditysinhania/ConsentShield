@@ -66,6 +66,14 @@ def hidden_reject(ctx: dict[str, Any], rule: dict[str, Any]) -> dict[str, Any] |
             "score": float(rule.get("severity", 0.9)),
             "evidence": "Accept control found but no visible Reject / Reject All control.",
             "metadata": {"accept_text": accept_btn.get("text")},
+            "features_used": [
+                "buttons.text",
+                "buttons.ariaLabel",
+                "visible_text",
+            ],
+            "text_score": float(rule.get("severity", 0.9)),
+            "visual_score": 0.0,
+            "layout_score": 0.0,
         }
 
     if reject_btn:
@@ -84,6 +92,15 @@ def hidden_reject(ctx: dict[str, Any], rule: dict[str, Any]) -> dict[str, Any] |
                     "opacity": opacity,
                     "fontSizePx": font_size,
                 },
+                "features_used": [
+                    "buttons.display",
+                    "buttons.visibility",
+                    "buttons.opacity",
+                    "buttons.fontSizePx",
+                ],
+                "visual_score": float(rule.get("severity", 0.9)),
+                "layout_score": 0.6,
+                "text_score": 0.3,
             }
     return None
 

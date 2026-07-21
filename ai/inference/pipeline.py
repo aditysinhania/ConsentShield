@@ -40,4 +40,5 @@ class InferencePipeline:
             rules=rule_result,
             vision=vision_features,
             text=text_pred,
+            payload=payload,
         )

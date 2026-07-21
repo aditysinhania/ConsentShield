@@ -14,6 +14,7 @@ from ai.common.types import (
     TrainResult,
 )
 from ai.fusion.classifier.model import FusionClassifier
+from ai.fusion.confidence import compute_confidence_breakdown
 from ai.fusion.feature_builder.builder import build_features
 
 
@@ -66,11 +67,14 @@ class FusionEngine(BaseDetector[FusionInput, PredictionResult]):
         # Prefer learned classifier when ready; otherwise rule-based aggregation
         if self._clf.is_ready():
             proba = self._clf.predict_proba(features)
+            confidence = 0.0
+            breakdown = compute_confidence_breakdown(inputs, final_confidence=confidence)
             return FusionOutput(
                 status="ready",
                 category=Category.UNKNOWN,
                 risk_score=0.0,
-                confidence=0.0,
+                confidence=confidence,
+                confidence_breakdown=breakdown,
                 feature_vector=features,
                 sources_used=sources,
                 message=str(proba.get("message")),
@@ -78,11 +82,14 @@ class FusionEngine(BaseDetector[FusionInput, PredictionResult]):
 
         rules = inputs.rules
         if rules is None:
+            confidence = 0.0
+            breakdown = compute_confidence_breakdown(inputs, final_confidence=confidence)
             return FusionOutput(
                 status="partial",
                 category=Category.UNKNOWN,
                 risk_score=0.0,
-                confidence=0.0,
+                confidence=confidence,
+                confidence_breakdown=breakdown,
                 feature_vector=features,
                 sources_used=sources,
                 message="No rule results available; vision/text models not loaded.",
@@ -91,6 +98,8 @@ class FusionEngine(BaseDetector[FusionInput, PredictionResult]):
         category = _map_category(rules.categories_triggered)
         # Confidence reflects rule coverage only until ML joins
         confidence = min(0.95, 0.35 + 0.1 * len(rules.hits)) if rules.hits else 0.7
+        confidence = round(confidence, 3)
+        breakdown = compute_confidence_breakdown(inputs, final_confidence=confidence)
         message = (
             "Fusion using rule engine only (vision/text stubs not loaded)."
             if notes
@@ -103,7 +112,8 @@ class FusionEngine(BaseDetector[FusionInput, PredictionResult]):
             status="ready",
             category=category,
             risk_score=rules.normalized_risk,
-            confidence=round(confidence, 3),
+            confidence=confidence,
+            confidence_breakdown=breakdown,
             feature_vector=features,
             sources_used=sources,
             message=message,

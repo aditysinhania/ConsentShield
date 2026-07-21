@@ -8,6 +8,36 @@ export type DarkPatternCategory =
   | "Mixed Consent Manipulation"
   | "Unknown";
 
+export interface BoundingRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  top: number;
+  left: number;
+  right: number;
+  bottom: number;
+}
+
+export interface ConfidenceBreakdown {
+  text: number;
+  visual: number;
+  layout: number;
+  cmp: number;
+  agreement: number;
+  final: number;
+}
+
+export interface RuleTrace {
+  rule_id: string;
+  features_used: string[];
+  visual_score: number;
+  text_score: number;
+  layout_score: number;
+  confidence_breakdown: ConfidenceBreakdown;
+  risk_contribution: number;
+}
+
 export interface EvidenceItem {
   id: string;
   statement: string;
@@ -15,6 +45,21 @@ export interface EvidenceItem {
   source: "rules" | "vision" | "text" | "fusion" | "dom" | string;
   rule_id?: string | null;
   metadata?: Record<string, unknown>;
+  explanation?: string | null;
+  user_impact?: string | null;
+  gdpr_relevance?: string | null;
+  recommendation?: string | null;
+  xpath?: string | null;
+  css_selector?: string | null;
+  dom_path?: string | null;
+  bounding_rect?: BoundingRect | null;
+  viewport?: { width: number; height: number } | null;
+  scroll_position?: { x: number; y: number } | null;
+  html_snippet?: string | null;
+  computed_styles?: Record<string, unknown> | null;
+  timestamp?: string | null;
+  url?: string | null;
+  page_title?: string | null;
 }
 
 export interface CssButtonSnapshot {
@@ -22,6 +67,13 @@ export interface CssButtonSnapshot {
   ariaLabel?: string;
   width?: number;
   height?: number;
+  x?: number;
+  y?: number;
+  top?: number;
+  left?: number;
+  right?: number;
+  bottom?: number;
+  boundingRect?: BoundingRect;
   fontSizePx?: number;
   fontWeight?: number | string;
   backgroundColor?: string;
@@ -30,6 +82,11 @@ export interface CssButtonSnapshot {
   visibility?: string;
   opacity?: number;
   textDecoration?: string;
+  xpath?: string;
+  cssSelector?: string;
+  domPath?: string;
+  htmlSnippet?: string;
+  computedStyles?: Record<string, unknown>;
 }
 
 export interface CssSnapshot {
@@ -42,6 +99,7 @@ export interface CssSnapshot {
   subscriptionOptions?: Array<Record<string, unknown>>;
   body?: { fontSizePx?: number };
   layoutHints?: string[];
+  cmp?: Record<string, unknown>;
 }
 
 export interface ScanPayload {
@@ -52,6 +110,7 @@ export interface ScanPayload {
   visible_text?: string | null;
   screenshot_base64?: string | null;
   viewport?: { width: number; height: number } | null;
+  scroll_position?: { x: number; y: number } | null;
   collected_at?: string | null;
 }
 
@@ -60,7 +119,9 @@ export interface ExplainableReport {
   risk_score: number;
   category: DarkPatternCategory | string;
   confidence: number;
+  confidence_breakdown?: ConfidenceBreakdown | null;
   evidence: EvidenceItem[];
+  rule_traces?: RuleTrace[];
   vision?: Record<string, unknown> | null;
   text?: Record<string, unknown> | null;
   rules?: Record<string, unknown> | null;
@@ -85,6 +146,7 @@ export const API_ROUTES = {
   scan: "/api/v1/scan",
   report: (id: string) => `/api/v1/report/${id}`,
   rulesCatalog: "/api/v1/rules/catalog",
+  ruleTraces: (id: string) => `/api/v1/rules/${id}/traces`,
   modelsRegistry: "/api/v1/models/registry",
   feedback: "/api/v1/feedback",
 } as const;

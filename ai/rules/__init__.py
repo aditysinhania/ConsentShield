@@ -18,6 +18,7 @@ from ai.common.types import (
 )
 from ai.rules.evaluators.registry import EVALUATORS
 from ai.rules.scoring.scorer import score_hits
+from ai.rules.traceability import attach_traces
 
 CONFIG_DIR = Path(__file__).parent / "config"
 
@@ -69,9 +70,13 @@ class RuleEngine(BaseDetector[ScanPayload, PredictionResult]):
                         score=float(result.get("score", rule.get("severity", 0.5))),
                         evidence=str(result.get("evidence", rule.get("description", ""))),
                         metadata=result.get("metadata", {}),
+                        features_used=list(result.get("features_used") or []),
+                        visual_score=float(result.get("visual_score") or 0.0),
+                        text_score=float(result.get("text_score") or 0.0),
+                        layout_score=float(result.get("layout_score") or 0.0),
                     )
                 )
-        return score_hits(hits)
+        return attach_traces(score_hits(hits))
 
     def train(self, dataset: Any, **kwargs: Any) -> TrainResult:
         return TrainResult(

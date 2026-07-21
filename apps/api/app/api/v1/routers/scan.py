@@ -30,6 +30,7 @@ async def create_scan(
         visible_text=body.visible_text,
         screenshot_base64=body.screenshot_base64,
         viewport=body.viewport,
+        scroll_position=body.scroll_position,
         collected_at=body.collected_at,
     )
     return await create_and_process_scan(

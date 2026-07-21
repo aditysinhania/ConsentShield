@@ -32,6 +32,31 @@ export function ExplanationPage() {
         <Panel title="Evidence items" body={String(data.evidence?.length ?? 0)} />
       </div>
 
+      {data.confidence_breakdown && (
+        <section className="rounded-2xl border border-ink/10 bg-white/70 p-6">
+          <h2 className="font-display text-2xl font-semibold">Confidence breakdown</h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-6 text-sm">
+            {(
+              [
+                ["text", data.confidence_breakdown.text],
+                ["visual", data.confidence_breakdown.visual],
+                ["layout", data.confidence_breakdown.layout],
+                ["cmp", data.confidence_breakdown.cmp],
+                ["agreement", data.confidence_breakdown.agreement],
+                ["final", data.confidence_breakdown.final],
+              ] as const
+            ).map(([label, value]) => (
+              <div key={label}>
+                <div className="text-ink/60 capitalize">{label}</div>
+                <div className="font-display text-lg font-semibold">
+                  {(value * 100).toFixed(0)}%
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="rounded-2xl border border-ink/10 bg-white/70 p-6">
         <h2 className="font-display text-2xl font-semibold">Evidence</h2>
         <ul className="mt-4 space-y-3">
@@ -40,9 +65,20 @@ export function ExplanationPage() {
               <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-moss" />
               <div>
                 <div className="font-semibold">{item.statement}</div>
+                {item.explanation && <div className="mt-1 text-ink/80">{item.explanation}</div>}
+                {item.user_impact && (
+                  <div className="mt-1 text-ink/60">Impact: {item.user_impact}</div>
+                )}
+                {item.gdpr_relevance && (
+                  <div className="mt-1 text-ink/60">GDPR: {item.gdpr_relevance}</div>
+                )}
+                {item.recommendation && (
+                  <div className="mt-1 text-ink/60">Recommendation: {item.recommendation}</div>
+                )}
                 <div className="text-ink/50">
                   {item.source}
                   {item.rule_id ? ` · ${item.rule_id}` : ""} · severity {item.severity}
+                  {item.css_selector ? ` · ${item.css_selector}` : ""}
                 </div>
               </div>
             </li>
@@ -52,6 +88,24 @@ export function ExplanationPage() {
           )}
         </ul>
       </section>
+
+      {(data.rule_traces || []).length > 0 && (
+        <section className="rounded-2xl border border-ink/10 bg-white/70 p-6">
+          <h2 className="font-display text-2xl font-semibold">Rule traces</h2>
+          <ul className="mt-4 space-y-2 text-sm">
+            {data.rule_traces!.map((t) => (
+              <li key={t.rule_id} className="border-b border-ink/5 pb-2">
+                <div className="font-semibold">{t.rule_id}</div>
+                <div className="text-ink/60">
+                  risk {t.risk_contribution} · visual {t.visual_score.toFixed(2)} · text{" "}
+                  {t.text_score.toFixed(2)} · layout {t.layout_score.toFixed(2)}
+                </div>
+                <div className="text-ink/50">features: {t.features_used.join(", ")}</div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <JsonPanel title="Rule engine" data={data.rules} />

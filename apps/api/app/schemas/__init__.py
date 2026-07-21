@@ -38,6 +38,7 @@ class ScanCreate(BaseModel):
     visible_text: str | None = None
     screenshot_base64: str | None = None
     viewport: dict[str, int] | None = None
+    scroll_position: dict[str, int] | None = None
     collected_at: str | None = None
 
 
@@ -57,7 +58,9 @@ class ReportOut(BaseModel):
     risk_score: float
     category: str
     confidence: float
+    confidence_breakdown: dict | None = None
     evidence: list[dict]
+    rule_traces: list[dict] = []
     vision: dict | None = None
     text: dict | None = None
     rules: dict | None = None

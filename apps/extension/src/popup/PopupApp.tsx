@@ -61,11 +61,39 @@ export function PopupApp() {
           </div>
           <p className="category">{report.category}</p>
           <p className="meta">Confidence {(report.confidence * 100).toFixed(0)}%</p>
+          {report.confidence_breakdown && (
+            <p className="meta">
+              Breakdown t/v/l/cmp{" "}
+              {(report.confidence_breakdown.text * 100).toFixed(0)}/
+              {(report.confidence_breakdown.visual * 100).toFixed(0)}/
+              {(report.confidence_breakdown.layout * 100).toFixed(0)}/
+              {(report.confidence_breakdown.cmp * 100).toFixed(0)}
+            </p>
+          )}
           <ul>
             {(report.evidence || []).map((item) => (
-              <li key={item.id}>{item.statement}</li>
+              <li key={item.id}>
+                <div>{item.statement}</div>
+                {item.explanation && <div className="meta">{item.explanation}</div>}
+                {item.recommendation && (
+                  <div className="meta">Rec: {item.recommendation}</div>
+                )}
+              </li>
             ))}
           </ul>
+          {(report.rule_traces || []).length > 0 && (
+            <details>
+              <summary>Rule traces ({report.rule_traces!.length})</summary>
+              <ul>
+                {report.rule_traces!.map((t) => (
+                  <li key={t.rule_id}>
+                    {t.rule_id} · risk {t.risk_contribution} · features{" "}
+                    {t.features_used.slice(0, 3).join(", ")}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
           {(report.pipeline_notes || []).length > 0 && (
             <details>
               <summary>Pipeline notes</summary>

@@ -25,3 +25,5 @@ def test_hidden_reject_triggers():
     ids = {h.rule_id for h in result.hits}
     assert "cookie.hidden_reject" in ids
     assert result.normalized_risk > 0
+    assert result.traces
+    assert any(t.rule_id == "cookie.hidden_reject" for t in result.traces)
