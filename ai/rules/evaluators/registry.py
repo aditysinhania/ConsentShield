@@ -7,15 +7,51 @@ from typing import Any, Callable
 
 EvaluatorFn = Callable[[dict[str, Any], dict[str, Any]], dict[str, Any] | None]
 
+# Normalized consent vocabulary — real-world CMP labels (not site-specific).
 REJECT_PATTERNS = re.compile(
-    r"\b(reject\s*all|decline\s*all|refuse|deny\s*all|necessary\s*only|"
-    r"essential\s*only|reject\s*non[- ]essential)\b",
+    r"\b("
+    r"reject(\s+all|\s+cookies|\s+non[- ]essential)?|"
+    r"decline(\s+all|\s+cookies)?|"
+    r"refuse(\s+all)?|"
+    r"deny(\s+all)?|"
+    r"disagree|"
+    r"no[,\s]+thank\s*you|"
+    r"no\s+thanks|"
+    r"only\s+necessary|"
+    r"necessary\s+only|"
+    r"essential\s+only|"
+    r"required\s+only|"
+    r"reject\s+non[- ]essential"
+    r")\b",
     re.I,
 )
-ACCEPT_PATTERNS = re.compile(r"\b(accept\s*all|allow\s*all|agree\s*(to)?\s*all|i\s*agree)\b", re.I)
+ACCEPT_PATTERNS = re.compile(
+    r"\b("
+    r"accept(\s+all|\s+cookies|\s+selected)?|"
+    r"allow(\s+all|\s+cookies)?|"
+    r"agree(\s+to\s+all|\s+and\s+continue)?|"
+    r"i\s+agree|"
+    r"yes[,\s]+i\s+accept|"
+    r"continue\s+with\s+cookies|"
+    r"confirm\s+choices|"
+    r"got\s+it|"
+    r"ok[,\s]+i\s+agree"
+    r")\b",
+    re.I,
+)
 SETTINGS_PATTERNS = re.compile(
-    r"\b(manage\s*(preferences|cookies|settings)|cookie\s*settings|"
-    r"customise|customize|more\s*options)\b",
+    r"\b("
+    r"manage\s*(preferences|cookies|settings|options)?|"
+    r"cookie\s*settings|"
+    r"privacy\s*settings|"
+    r"customise|customize|"
+    r"preferences|"
+    r"more\s*options|"
+    r"save\s+preferences|"
+    r"confirm\s+my\s+choices|"
+    r"cookie\s+preferences|"
+    r"consent\s+settings"
+    r")\b",
     re.I,
 )
 AUTO_RENEW = re.compile(

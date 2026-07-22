@@ -84,3 +84,19 @@ docker/data/
 *.tmp
 *.temp
 .DS_Store
+
+# AI model cache
+models/
+*.pt
+*.bin
+*.safetensors
+
+# HuggingFace cache
+.cache/
+hf_cache/
+
+# Python
+.venv/
+
+# PyTorch
+torch_cache/

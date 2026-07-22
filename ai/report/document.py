@@ -140,11 +140,13 @@ def build_report_document(
             "rules": report.get("rules"),
             "fusion": report.get("fusion"),
             "pipeline_notes": report.get("pipeline_notes") or [],
+            "ai_analysis": report.get("ai_analysis"),
+            "debug": report.get("debug"),
         },
         meta={
             "risk_score": risk_score,
             "category": category,
             "confidence": confidence,
-            "audit_format_version": "1.1",
+            "audit_format_version": "1.2",
         },
     )

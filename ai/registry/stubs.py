@@ -7,7 +7,6 @@ from typing import Any
 from ai.common.types import ScanPayload
 from ai.narrator.narrator import LLMNarrator
 from ai.text.classifier.text_classifier import TextClassifier as TextClassifierImpl
-from ai.text.embeddings.encoder import embed_texts
 from ai.vision.detectors.vision_detector import VisionDetector
 
 
@@ -16,7 +15,11 @@ class StubEmbeddingEngine:
     version = "0.1.0"
 
     def embed(self, texts: list[str]) -> dict[str, Any]:
-        return embed_texts(texts)
+        return {
+            "status": "not_loaded",
+            "embeddings": [],
+            "message": "Embedding model not configured (stub).",
+        }
 
     def is_ready(self) -> bool:
         return False

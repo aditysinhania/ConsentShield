@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from ai.common.types import ExplainableReport, FusionInput, ScanPayload
+from ai.debug.zero_risk import build_zero_risk_debug
 from ai.explanation.generator import ExplanationGenerator
 from ai.fusion.aggregator.fusion_engine import FusionEngine
 from ai.performance.metrics import MetricStage, PerformanceCollector
@@ -34,7 +35,8 @@ def _detect_banner_cmp(payload: ScanPayload, timeline: TimelineRecorder) -> None
 
 class InferencePipeline:
     """
-    Chrome Extension payload → Rules + Vision stub + Text stub → Fusion → Explanation.
+    Chrome Extension payload → Rules + Vision + Text → Fusion → Explanation.
+    Rules remain source of truth; Phase 4 models are assistive via ModelRegistry.
     """
 
     def __init__(self, registry: ModelRegistry | None = None) -> None:
@@ -92,6 +94,17 @@ class InferencePipeline:
                 payload=payload,
             )
             report = enrich_report(report, payload=payload, fusion=fusion_out)
+            debug = build_zero_risk_debug(
+                payload,
+                rule_result,
+                report,
+                rules_catalog_count=len(self.rules.list_rules()),
+            )
+            if debug is not None:
+                report = report.model_copy(update={"debug": debug})
+                notes = list(report.pipeline_notes or [])
+                notes.append(f"Zero-risk debug: {debug.get('summary')}")
+                report = report.model_copy(update={"pipeline_notes": notes})
         tl.mark(TimelineEventName.EXPLANATION, metadata={"evidence_count": len(report.evidence)})
 
         perf.set(MetricStage.LLM, 0.0)

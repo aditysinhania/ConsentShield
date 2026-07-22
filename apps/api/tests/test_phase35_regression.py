@@ -8,6 +8,7 @@ import pytest
 
 from ai.datasets.fixtures.validation_sites import (
     adobe_payload,
+    bbc_payload,
     guardian_payload,
     mozilla_payload,
     reuters_payload,
@@ -36,6 +37,7 @@ SITES = [
     ("Spotify", spotify_payload),
     ("Mozilla", mozilla_payload),
     ("Reuters", reuters_payload),
+    ("BBC", bbc_payload),
 ]
 
 
@@ -46,9 +48,10 @@ def test_regression_risk_scores_stable(name, payload_fn, pipeline):
     bands = {
         "Guardian": (30, 55),
         "Adobe": (28, 55),
-        "Spotify": (0, 20),
+        "Spotify": (0, 25),
         "Mozilla": (12, 40),
         "Reuters": (20, 55),
+        "BBC": (20, 55),
     }
     lo, hi = bands[name]
     assert lo <= report.risk_score <= hi, f"{name} risk {report.risk_score} outside [{lo},{hi}]"

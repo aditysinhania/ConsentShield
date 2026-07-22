@@ -6,6 +6,7 @@ from ai.accessibility.analyzer import analyze_accessibility
 from ai.clustering.patterns import cluster_evidence
 from ai.common.types import ExplainableReport, FusionOutput, ScanPayload
 from ai.severity.engine import compute_severity
+from ai.report.ai_analysis import attach_ai_analysis
 
 
 def enrich_report(
@@ -14,7 +15,7 @@ def enrich_report(
     payload: ScanPayload,
     fusion: FusionOutput,
 ) -> ExplainableReport:
-    """Attach severity tier, pattern clusters, and accessibility (separate from findings)."""
+    """Attach severity tier, pattern clusters, accessibility, and AI analysis."""
     accessibility = analyze_accessibility(payload)
     cmp_certainty = 0.0
     if fusion.confidence_breakdown is not None:
@@ -34,10 +35,16 @@ def enrich_report(
     )
     clusters = cluster_evidence(report.evidence)
 
-    return report.model_copy(
+    enriched = report.model_copy(
         update={
             "severity": severity.model_dump(),
             "pattern_clusters": [c.model_dump() for c in clusters],
             "accessibility": accessibility.model_dump(),
         }
+    )
+    return attach_ai_analysis(
+        enriched,
+        text=report.text,
+        vision=report.vision,
+        fusion=fusion,
     )

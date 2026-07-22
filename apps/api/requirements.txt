@@ -18,3 +18,8 @@ pandas>=2.2.0
 scikit-learn>=1.5.0
 Pillow>=10.4.0
 reportlab>=4.2.0
+
+# Phase 4 optional pretrained stack (also: pip install -e ".[ai]")
+# torch>=2.5.0
+# transformers>=4.46.0
+# sentence-transformers>=3.0.0

@@ -12,10 +12,18 @@ router = APIRouter()
 @router.get("/registry")
 async def model_registry() -> dict:
     pipe = get_pipeline()
-    registry = ModelRegistry.default()
+    registry = getattr(pipe, "registry", None) or ModelRegistry.default()
     return {
         "stub_mode": settings.AI_STUB_MODE,
         "ai_provider": settings.AI_PROVIDER,
+        "phase4": {
+            "text_model": settings.TEXT_MODEL_NAME,
+            "vision_model": settings.VISION_MODEL_NAME,
+            "device": settings.DEVICE,
+            "backend": settings.PHASE4_BACKEND,
+            "cache_models": settings.CACHE_MODELS,
+            "models_root": settings.MODELS_ROOT,
+        },
         "interfaces": registry.describe(),
         "modules": [
             {
@@ -33,6 +41,16 @@ async def model_registry() -> dict:
                 "name": pipe.explainer.name,
                 "version": pipe.explainer.version,
                 "ready": pipe.explainer.is_ready(),
+            },
+            {
+                "name": pipe.text.name,
+                "version": pipe.text.version,
+                "ready": pipe.text.is_ready(),
+            },
+            {
+                "name": pipe.vision.name,
+                "version": pipe.vision.version,
+                "ready": pipe.vision.is_ready(),
             },
         ],
     }

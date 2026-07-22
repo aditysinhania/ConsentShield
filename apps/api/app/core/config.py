@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     FUSION_MODEL_PATH: str = ""
     AI_STUB_MODE: bool = True
 
+    TEXT_MODEL_NAME: str = "sentence-transformers/all-MiniLM-L6-v2"
+    VISION_MODEL_NAME: str = "openai/clip-vit-base-patch32"
+    DEVICE: str = "cpu"
+    EMBEDDING_BATCH_SIZE: int = 16
+    CACHE_MODELS: bool = True
+    PHASE4_BACKEND: str = "auto"
+
     AI_PROVIDER: str = "offline"
     GEMINI_API_KEY: str = ""
     OPENAI_API_KEY: str = ""

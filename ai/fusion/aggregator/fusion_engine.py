@@ -1,4 +1,4 @@
-"""Rule-dominant fusion aggregator until learned models are available."""
+"""Rule-dominant fusion aggregator with Phase 4 NLP/vision assistance."""
 
 from __future__ import annotations
 
@@ -18,16 +18,6 @@ from ai.fusion.confidence import compute_confidence_breakdown
 from ai.fusion.feature_builder.builder import build_features
 
 
-_CATEGORY_PRIORITY = [
-    Category.MIXED_CONSENT_MANIPULATION,
-    Category.COOKIE_CONSENT_MANIPULATION,
-    Category.HIDDEN_SUBSCRIPTION,
-    Category.HIDDEN_BILLING,
-    Category.MISLEADING_FREE_TRIAL,
-    Category.CONFIRMSHAMING,
-]
-
-
 def _map_category(names: list[str]) -> Category:
     if not names:
         return Category.NO_DARK_PATTERN
@@ -41,9 +31,22 @@ def _map_category(names: list[str]) -> Category:
     return Category.UNKNOWN
 
 
+def _dom_supports_ai(dom: dict[str, Any]) -> bool:
+    if not dom:
+        return False
+    if isinstance(dom.get("banner"), dict) and (
+        dom["banner"].get("width") or dom["banner"].get("height") or dom["banner"].get("xpath")
+    ):
+        return True
+    if isinstance(dom.get("cmp"), dict) and dom["cmp"].get("detected"):
+        return True
+    buttons = dom.get("buttons") or []
+    return any(isinstance(b, dict) and (b.get("text") or b.get("ariaLabel")) for b in buttons)
+
+
 class FusionEngine(BaseDetector[FusionInput, PredictionResult]):
     name = "fusion_engine"
-    version = "0.1.0"
+    version = "0.4.0"
 
     def __init__(self) -> None:
         self._clf = FusionClassifier()
@@ -59,12 +62,15 @@ class FusionEngine(BaseDetector[FusionInput, PredictionResult]):
             sources.append("vision")
             if inputs.vision.status != "ready":
                 notes.append(f"Vision: {inputs.vision.status}")
+            elif inputs.vision.message:
+                notes.append(inputs.vision.message)
         if inputs.text:
             sources.append("text")
             if inputs.text.status != "ready":
                 notes.append(f"Text: {inputs.text.status}")
+            elif inputs.text.message:
+                notes.append(inputs.text.message)
 
-        # Prefer learned classifier when ready; otherwise rule-based aggregation
         if self._clf.is_ready():
             proba = self._clf.predict_proba(features)
             confidence = 0.0
@@ -95,23 +101,59 @@ class FusionEngine(BaseDetector[FusionInput, PredictionResult]):
                 message="No rule results available; vision/text models not loaded.",
             )
 
+        # Rules are the source of truth for risk score
+        risk = float(rules.normalized_risk)
         category = _map_category(rules.categories_triggered)
-        # Confidence reflects rule coverage only until ML joins
+
         confidence = min(0.95, 0.35 + 0.1 * len(rules.hits)) if rules.hits else 0.7
+
+        # AI may increase confidence when grounded in DOM + agreeing with rules
+        nlp_ready = inputs.text and inputs.text.status == "ready"
+        vision_ready = inputs.vision and inputs.vision.status == "ready"
+        grounded = _dom_supports_ai(inputs.dom_features or {})
+
+        if grounded and rules.hits:
+            if nlp_ready and inputs.text.confidence:
+                confidence = min(0.95, confidence + 0.08 * float(inputs.text.confidence))
+            if vision_ready and inputs.vision.banner_detected:
+                confidence = min(0.95, confidence + 0.05)
+
+        # AI must not invent violations: never raise risk above rules when no hits
+        # Soft corroboration only when rules already fired and AI agrees
+        if rules.hits and grounded:
+            ai_boost = 0.0
+            if nlp_ready and inputs.text.category and inputs.text.category != Category.NO_DARK_PATTERN:
+                if inputs.text.category.value in rules.categories_triggered or any(
+                    "cookie" in c.lower() or "consent" in c.lower() for c in rules.categories_triggered
+                ):
+                    ai_boost += 2.0 * float(inputs.text.confidence or 0.0)
+            if vision_ready and inputs.vision.banner_detected:
+                ai_boost += 1.5
+            risk = min(100.0, risk + ai_boost)
+
         confidence = round(confidence, 3)
         breakdown = compute_confidence_breakdown(inputs, final_confidence=confidence)
-        message = (
-            "Fusion using rule engine only (vision/text stubs not loaded)."
-            if notes
-            else "Fusion using rule engine."
-        )
+
+        ai_bits = []
+        if nlp_ready:
+            ai_bits.append("nlp")
+        if vision_ready:
+            ai_bits.append("vision")
+        if ai_bits and rules.hits:
+            message = f"Fusion rule-dominant with AI assist ({'+'.join(ai_bits)})."
+        elif ai_bits:
+            message = f"Fusion using rules; AI channels ready ({'+'.join(ai_bits)}) without overriding risk."
+        elif notes:
+            message = "Fusion using rule engine only (vision/text stubs not loaded)."
+        else:
+            message = "Fusion using rule engine."
         if notes:
-            message = message + " " + " ".join(notes)
+            message = message + " " + " ".join(notes[:3])
 
         return FusionOutput(
             status="ready",
             category=category,
-            risk_score=rules.normalized_risk,
+            risk_score=round(risk, 2),
             confidence=confidence,
             confidence_breakdown=breakdown,
             feature_vector=features,
@@ -136,4 +178,4 @@ class FusionEngine(BaseDetector[FusionInput, PredictionResult]):
         raise NotImplementedError("Learned fusion save_model not implemented yet.")
 
     def is_ready(self) -> bool:
-        return True  # rule-based path always available
+        return True

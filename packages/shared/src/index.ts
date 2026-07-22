@@ -26,6 +26,10 @@ export interface ConfidenceBreakdown {
   cmp: number;
   agreement: number;
   final: number;
+  rules?: number;
+  nlp?: number;
+  vision_model?: number;
+  fusion?: number;
 }
 
 export interface RuleTrace {
@@ -100,6 +104,8 @@ export interface CssSnapshot {
   body?: { fontSizePx?: number };
   layoutHints?: string[];
   cmp?: Record<string, unknown>;
+  consent_state?: Record<string, unknown>;
+  iframes?: Array<Record<string, unknown>>;
 }
 
 export interface ScanPayload {
@@ -133,6 +139,8 @@ export interface ExplainableReport {
   rules?: Record<string, unknown> | null;
   fusion?: Record<string, unknown> | null;
   pipeline_notes?: string[];
+  debug?: Record<string, unknown> | null;
+  ai_analysis?: Record<string, unknown> | null;
   screenshot_path?: string | null;
   annotated_screenshot_path?: string | null;
 }

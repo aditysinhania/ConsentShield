@@ -47,6 +47,8 @@ def _report_out(
         annotated_screenshot_path=report.get("annotated_screenshot_path"),
         export_paths=report.get("export_paths"),
         narrator=report.get("narrator"),
+        debug=report.get("debug"),
+        ai_analysis=report.get("ai_analysis"),
     )
 
 

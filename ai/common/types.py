@@ -53,6 +53,11 @@ class ConfidenceBreakdown(BaseModel):
     cmp: float = Field(ge=0.0, le=1.0, default=0.0)
     agreement: float = Field(ge=0.0, le=1.0, default=0.0)
     final: float = Field(ge=0.0, le=1.0, default=0.0)
+    # Phase 4 contribution channels (additive; rules remain primary)
+    rules: float = Field(ge=0.0, le=1.0, default=0.0)
+    nlp: float = Field(ge=0.0, le=1.0, default=0.0)
+    vision_model: float = Field(ge=0.0, le=1.0, default=0.0)
+    fusion: float = Field(ge=0.0, le=1.0, default=0.0)
 
 
 class RuleTrace(BaseModel):
@@ -188,6 +193,8 @@ class ExplainableReport(BaseModel):
     rules: RuleResult | None = None
     fusion: FusionOutput | None = None
     pipeline_notes: list[str] = Field(default_factory=list)
+    debug: dict[str, Any] | None = None
+    ai_analysis: dict[str, Any] | None = None
 
 
 class PredictionResult(BaseModel):

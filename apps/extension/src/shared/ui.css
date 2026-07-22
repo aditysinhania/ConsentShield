@@ -1,0 +1,250 @@
+/* ConsentShield design system — professional light/dark */
+
+:root,
+[data-theme="light"] {
+  --bg: #f4f6f5;
+  --bg-elevated: #ffffff;
+  --ink: #14201b;
+  --ink-muted: #5c6b64;
+  --border: #d5ddd8;
+  --accent: #1b5e45;
+  --accent-soft: #e7f2ec;
+  --danger: #b42318;
+  --danger-soft: #fef3f2;
+  --success: #1a7a4c;
+  --success-soft: #ecfdf3;
+  --shadow: 0 8px 28px rgba(20, 32, 27, 0.08);
+  --radius: 14px;
+  --font: "Segoe UI", "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", "Cascadia Code", ui-monospace, monospace;
+  --risk-low: #1a7a4c;
+  --risk-moderate: #a16207;
+  --risk-elevated: #c2410c;
+  --risk-high: #b91c1c;
+  --focus: #2563eb;
+}
+
+[data-theme="dark"] {
+  --bg: #0f1412;
+  --bg-elevated: #1a221e;
+  --ink: #e8efe9;
+  --ink-muted: #9aada2;
+  --border: #2c3a33;
+  --accent: #3d9b74;
+  --accent-soft: #1a2e26;
+  --danger: #f97066;
+  --danger-soft: #3b1816;
+  --success: #3dcf8e;
+  --success-soft: #143528;
+  --shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
+  --risk-low: #3dcf8e;
+  --risk-moderate: #eab308;
+  --risk-elevated: #fb923c;
+  --risk-high: #f87171;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fade-in {
+  animation: fade-up 0.28s ease both;
+}
+
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 0.9rem 1rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  padding: 0.55rem 0.9rem;
+  font-weight: 600;
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: var(--bg-elevated);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink-muted);
+}
+
+.btn-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: transparent;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.chip-muted {
+  background: var(--bg);
+  color: var(--ink-muted);
+  border: 1px solid var(--border);
+}
+
+.meta {
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 0.85rem;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  z-index: 50;
+  animation: fade-up 0.25s ease both;
+}
+
+.collapsible > summary {
+  cursor: pointer;
+  list-style: none;
+  font-weight: 650;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+}
+
+.collapsible > summary::-webkit-details-marker {
+  display: none;
+}
+
+.collapsible > summary::after {
+  content: "▾";
+  color: var(--ink-muted);
+  transition: transform 0.2s ease;
+}
+
+.collapsible:not([open]) > summary::after {
+  transform: rotate(-90deg);
+}
+
+.collapsible[open] {
+  animation: fade-up 0.2s ease;
+}
+
+@media (prefers-contrast: more) {
+  :root,
+  [data-theme="light"],
+  [data-theme="dark"] {
+    --border: currentColor;
+    --ink-muted: var(--ink);
+  }
+
+  .btn,
+  .chip,
+  .card {
+    border-width: 2px;
+  }
+}

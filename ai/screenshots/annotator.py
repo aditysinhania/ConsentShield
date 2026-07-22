@@ -16,17 +16,20 @@ except ImportError:  # pragma: no cover - tested with pillow installed
     ImageFont = None  # type: ignore[misc, assignment]
 
 ACCEPT_PATTERNS = re.compile(
-    r"\b(accept\s*all|allow\s*all|agree\s*(to)?\s*all|i\s*agree|accept)\b",
+    r"\b(accept(\s+all|\s+cookies|\s+selected)?|allow(\s+all|\s+cookies)?|"
+    r"agree(\s+to\s+all|\s+and\s+continue)?|i\s+agree|yes[,\s]+i\s+accept|"
+    r"continue\s+with\s+cookies|confirm\s+choices)\b",
     re.I,
 )
 REJECT_PATTERNS = re.compile(
-    r"\b(reject\s*all|decline\s*all|refuse|deny\s*all|necessary\s*only|"
-    r"essential\s*only|reject\s*non[- ]essential|reject)\b",
+    r"\b(reject(\s+all|\s+cookies|\s+non[- ]essential)?|decline(\s+all|\s+cookies)?|"
+    r"refuse(\s+all)?|deny(\s+all)?|disagree|no[,\s]+thank\s*you|no\s+thanks|"
+    r"necessary\s+only|essential\s+only|only\s+necessary|reject\s+non[- ]essential)\b",
     re.I,
 )
 SETTINGS_PATTERNS = re.compile(
-    r"\b(manage\s*(preferences|cookies|settings)|cookie\s*settings|"
-    r"customise|customize|more\s*options|settings)\b",
+    r"\b(manage\s*(preferences|cookies|settings|options)?|cookie\s*settings|"
+    r"privacy\s*settings|customise|customize|more\s*options|preferences)\b",
     re.I,
 )
 

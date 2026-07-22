@@ -100,6 +100,33 @@ def export_markdown(document: ReportDocument) -> str:
     ):
         if key in perf:
             lines.append(f"- {key.replace('_', ' ').title()}: **{perf[key]} ms**")
+    lines.extend(["", "## AI Analysis", ""])
+    ai = (document.appendix or {}).get("ai_analysis") or {}
+    if ai:
+        nlp = ai.get("nlp") or {}
+        vision = ai.get("vision") or {}
+        contrib = ai.get("fusion_contribution") or {}
+        lines.append(ai.get("note") or "AI assistive findings.")
+        lines.append(
+            f"- NLP status: `{nlp.get('status')}` · confidence: {nlp.get('confidence')}"
+        )
+        lines.append(
+            f"- Vision status: `{vision.get('status')}` · confidence: "
+            f"{(ai.get('model_confidence') or {}).get('vision')}"
+        )
+        lines.append(
+            f"- Fusion contribution — rules: {contrib.get('rules')}, "
+            f"nlp: {contrib.get('nlp')}, vision: {contrib.get('vision')}, "
+            f"fusion: {contrib.get('fusion')}"
+        )
+        for f in (nlp.get("findings") or [])[:8]:
+            if isinstance(f, dict):
+                lines.append(
+                    f"- Pattern `{f.get('predicted_pattern')}` "
+                    f"(sim={f.get('embedding_similarity')}) ← {f.get('matched_example')}"
+                )
+    else:
+        lines.append("_AI analysis unavailable (stub mode or models not loaded)._")
     lines.extend(["", "## Recommendations", ""])
     for rec in document.recommendations:
         lines.append(f"- {rec}")
@@ -195,14 +222,47 @@ def export_html(document: ReportDocument) -> str:
 <section id="performance"><h2><span class="section-num">7.</span>Performance</h2>
 <table class="data"><thead><tr><th>Stage</th><th>Duration</th><th>% Total</th></tr></thead>
 <tbody>{perf_rows or '<tr><td colspan="3">No metrics.</td></tr>'}</tbody></table></section>
-<section id="recommendations"><h2><span class="section-num">8.</span>Recommendations</h2>
+<section id="ai-analysis"><h2><span class="section-num">8.</span>AI Analysis</h2>
+{_ai_analysis_html(document)}</section>
+<section id="recommendations"><h2><span class="section-num">9.</span>Recommendations</h2>
 <ul>{rec_html or '<li>None.</li>'}</ul></section>
-<section id="appendix" class="appendix"><h2><span class="section-num">9.</span>Appendix</h2>
+<section id="appendix" class="appendix"><h2><span class="section-num">10.</span>Appendix</h2>
 <p>Rule traces: {len(document.appendix.get('rule_traces') or [])} · Pipeline notes: {len(document.appendix.get('pipeline_notes') or [])}</p>
 <pre>{_esc(json.dumps(document.appendix, indent=2, default=str)[:8000])}</pre></section>
-<footer class="audit-footer">ConsentShield deterministic consent audit · Report format v1.1 · Rules are the source of truth.</footer>
+<footer class="audit-footer">ConsentShield consent audit · Report format v1.2 · Rules are the source of truth; AI is assistive.</footer>
 </body>
 </html>"""
+
+
+def _ai_analysis_html(document: ReportDocument) -> str:
+    ai = (document.appendix or {}).get("ai_analysis") or {}
+    if not ai:
+        return "<p>AI analysis unavailable (stub mode or models not loaded).</p>"
+    nlp = ai.get("nlp") or {}
+    vision = ai.get("vision") or {}
+    contrib = ai.get("fusion_contribution") or {}
+    sims = ai.get("similarity_scores") or []
+    sim_rows = "".join(
+        f"<tr><td>{_esc(s.get('pattern'))}</td><td>{_esc(s.get('similarity'))}</td></tr>" for s in sims[:10]
+    )
+    findings = nlp.get("findings") or []
+    find_rows = "".join(
+        f"<tr><td>{_esc(f.get('predicted_pattern'))}</td><td>{_esc(f.get('confidence'))}</td>"
+        f"<td>{_esc(f.get('matched_example'))}</td></tr>"
+        for f in findings[:8]
+        if isinstance(f, dict)
+    )
+    return f"""
+<p>{_esc(ai.get('note') or '')}</p>
+<p><strong>NLP:</strong> {_esc(nlp.get('status'))} · confidence {_esc(nlp.get('confidence'))}</p>
+<p><strong>Vision:</strong> {_esc(vision.get('status'))} · confidence {_esc((ai.get('model_confidence') or {}).get('vision'))}</p>
+<p><strong>Fusion contribution</strong> — rules {_esc(contrib.get('rules'))} · nlp {_esc(contrib.get('nlp'))} ·
+vision {_esc(contrib.get('vision'))} · fusion {_esc(contrib.get('fusion'))}</p>
+<table class="data"><thead><tr><th>NLP Pattern</th><th>Confidence</th><th>Matched Example</th></tr></thead>
+<tbody>{find_rows or '<tr><td colspan="3">No NLP pattern matches.</td></tr>'}</tbody></table>
+<table class="data"><thead><tr><th>Pattern</th><th>Similarity</th></tr></thead>
+<tbody>{sim_rows or '<tr><td colspan="2">None.</td></tr>'}</tbody></table>
+"""
 
 
 def export_pdf(document: ReportDocument) -> bytes:

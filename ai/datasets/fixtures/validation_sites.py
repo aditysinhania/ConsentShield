@@ -54,17 +54,17 @@ def _banner(width: int, height: int, *, fixed: bool = True) -> dict:
 
 
 def guardian_payload() -> ScanPayload:
-    """Guardian-like: accept dominant, hidden reject path, moderate risk ~43."""
+    """Guardian-like Sourcepoint UI: Yes/No labels, accept visually dominant."""
     return ScanPayload(
         url="https://www.theguardian.com/",
         title="The Guardian",
-        visible_text="We use cookies. Accept all. Manage preferences.",
+        visible_text="It's your choice. We use cookies. Yes, I accept. No, thank you. Manage cookies.",
         viewport={"width": 1280, "height": 800},
         css_snapshot={
             "buttons": [
-                _btn("Accept all", width=200, height=48, font_weight=700),
+                _btn("Yes, I accept", width=200, height=48, font_weight=700),
                 _btn(
-                    "Reject all",
+                    "No, thank you",
                     width=80,
                     height=28,
                     font_weight=400,
@@ -73,10 +73,22 @@ def guardian_payload() -> ScanPayload:
                     font_size=11,
                     text_decoration="underline",
                 ),
-                _btn("Manage preferences", width=140, height=32, font_weight=400, bg="transparent", fg="rgb(80,80,80)"),
+                _btn("Manage cookies", width=140, height=32, font_weight=400, bg="transparent", fg="rgb(80,80,80)"),
             ],
             "banner": _banner(1200, 420),
-            "cmp": {"name": "Sourcepoint", "detected": True},
+            "cmp": {
+                "detected": True,
+                "vendor": "Sourcepoint",
+                "detection_method": "dom:[id*='sp_message']",
+                "confidence": 0.9,
+            },
+            "consent_state": {
+                "banner_visible": True,
+                "fullscreen_dialog": False,
+                "bottom_banner": False,
+                "overlay": True,
+                "placement": "overlay",
+            },
         },
     )
 
@@ -102,7 +114,48 @@ def adobe_payload() -> ScanPayload:
                 ),
             ],
             "banner": _banner(1300, 380),
-            "cmp": {"name": "OneTrust", "detected": True, "version": "6.x"},
+            "cmp": {
+                "detected": True,
+                "vendor": "OneTrust",
+                "version": "6.x",
+                "detection_method": "dom:#onetrust-banner-sdk",
+                "confidence": 0.9,
+            },
+            "consent_state": {"banner_visible": True, "overlay": True, "placement": "overlay"},
+        },
+    )
+
+
+def bbc_payload() -> ScanPayload:
+    """BBC-like: accept dominant + settings path, moderate risk."""
+    return ScanPayload(
+        url="https://www.bbc.com/",
+        title="BBC",
+        visible_text="We use cookies. Accept all. Reject. Cookie settings.",
+        viewport={"width": 1280, "height": 800},
+        css_snapshot={
+            "buttons": [
+                _btn("Accept all", width=180, height=46, font_weight=700),
+                _btn(
+                    "Reject",
+                    width=90,
+                    height=30,
+                    font_weight=400,
+                    bg="transparent",
+                    fg="rgb(60,60,60)",
+                    font_size=12,
+                    text_decoration="underline",
+                ),
+                _btn("Cookie settings", width=130, height=32, font_weight=400, bg="transparent", fg="rgb(0,90,180)"),
+            ],
+            "banner": _banner(1180, 360),
+            "cmp": {
+                "detected": True,
+                "vendor": "Sourcepoint",
+                "detection_method": "script:sourcepoint",
+                "confidence": 0.75,
+            },
+            "consent_state": {"banner_visible": True, "bottom_banner": False, "overlay": True, "placement": "overlay"},
         },
     )
 
@@ -120,7 +173,13 @@ def spotify_payload() -> ScanPayload:
                 _btn("Reject non-essential", width=160, height=44, font_weight=600, bg="rgb(40,40,40)"),
             ],
             "banner": _banner(900, 180, fixed=False),
-            "cmp": {"name": "Spotify CMP", "detected": True},
+            "cmp": {
+                "detected": True,
+                "vendor": "Spotify CMP",
+                "detection_method": "dom",
+                "confidence": 0.7,
+            },
+            "consent_state": {"banner_visible": True, "placement": "overlay"},
         },
     )
 
@@ -147,7 +206,13 @@ def mozilla_payload() -> ScanPayload:
                 ),
             ],
             "banner": _banner(1100, 260),
-            "cmp": {"name": "Mozilla", "detected": True},
+            "cmp": {
+                "detected": True,
+                "vendor": "Mozilla",
+                "detection_method": "dom",
+                "confidence": 0.6,
+            },
+            "consent_state": {"banner_visible": True, "bottom_banner": True, "placement": "bottom_banner"},
         },
     )
 
@@ -164,7 +229,22 @@ def reuters_payload() -> ScanPayload:
                 _btn("Accept All", width=210, height=50, font_weight=800),
             ],
             "banner": _banner(1250, 400),
-            "cmp": {"name": "TrustArc", "detected": True},
+            "cmp": {
+                "detected": True,
+                "vendor": "TrustArc",
+                "detection_method": "iframe:trustarc",
+                "confidence": 0.85,
+            },
+            "consent_state": {"banner_visible": True, "overlay": True, "placement": "overlay"},
+            "iframes": [
+                {
+                    "src": "https://consent.trustarc.com/notice",
+                    "cross_origin": True,
+                    "likely_cmp": True,
+                    "cmp_vendor": "TrustArc",
+                    "accessible": False,
+                }
+            ],
         },
     )
 
@@ -185,6 +265,12 @@ def cookielawinfo_payload() -> ScanPayload:
             "checkboxes": [
                 {"label": "Marketing cookies", "checked": True, "required": False, "name": "marketing"},
             ],
-            "cmp": {"name": "CookieYes", "detected": True},
+            "cmp": {
+                "detected": True,
+                "vendor": "CookieYes",
+                "detection_method": "dom:.cky-consent-container",
+                "confidence": 0.9,
+            },
+            "consent_state": {"banner_visible": True, "overlay": True, "placement": "overlay"},
         },
     )

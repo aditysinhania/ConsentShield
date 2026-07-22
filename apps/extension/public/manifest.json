@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "ConsentShield",
-  "version": "0.1.0",
-  "description": "Detect consent-related dark patterns on cookie banners and subscription pages.",
+  "version": "1.0.0",
+  "description": "Professional consent dark-pattern scanner with explainable Rule Engine + AI assist.",
   "permissions": ["activeTab", "scripting", "storage", "tabs"],
-  "host_permissions": ["<all_urls>", "http://localhost:8000/*"],
+  "host_permissions": ["<all_urls>", "http://localhost:8000/*", "http://127.0.0.1:8000/*"],
   "background": {
     "service_worker": "background.js",
     "type": "module"
@@ -18,6 +18,12 @@
       "matches": ["<all_urls>"],
       "js": ["content.js"],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["details.html", "settings.html", "assets/*"],
+      "matches": ["<all_urls>"]
     }
   ]
 }
