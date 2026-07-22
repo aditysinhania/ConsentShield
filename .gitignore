@@ -63,12 +63,14 @@ models/checkpoints/*
 *.safetensors
 
 # Runtime storage
-storage/screenshots/*
-!storage/screenshots/.gitkeep
-storage/reports/*
-!storage/reports/.gitkeep
-storage/datasets/*
-!storage/datasets/.gitkeep
+apps/api/storage/screenshots/*
+!apps/api/storage/screenshots/.gitkeep
+
+apps/api/storage/reports/*
+!apps/api/storage/reports/.gitkeep
+
+apps/api/storage/datasets/*
+!apps/api/storage/datasets/.gitkeep
 
 # Research data (large / private)
 research/datasets/*
@@ -100,3 +102,8 @@ hf_cache/
 
 # PyTorch
 torch_cache/
+
+# Runtime generated files
+storage/screenshots/
+storage/reports/
+storage/datasets/
