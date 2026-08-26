@@ -1,11 +1,9 @@
-"""Training entrypoints — stubs for vision/text/fusion training jobs."""
+"""Training entrypoints — Phase 1 framework (dry-run only)."""
 
 from __future__ import annotations
 
-
-def main() -> None:
-    print("ConsentShield training CLI stub. See docs/Training.md.")
+from ai.training.train import main
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

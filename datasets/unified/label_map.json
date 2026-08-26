@@ -1,0 +1,40 @@
+{
+  "binary": [
+    "dark_pattern",
+    "no_dark_pattern"
+  ],
+  "fine": [
+    "attention_distraction",
+    "confirmshaming",
+    "default_choice",
+    "disguised_ads",
+    "forced_action",
+    "gamification",
+    "hidden_costs",
+    "hidden_subscription",
+    "interface_interference",
+    "nagging",
+    "no_dark_pattern",
+    "obstruction",
+    "scarcity_urgency",
+    "ui_component_context"
+  ],
+  "consentshield": [
+    "Confirmshaming",
+    "Cookie Consent Manipulation",
+    "Hidden Billing",
+    "Hidden Subscription",
+    "Mixed Consent Manipulation",
+    "No Dark Pattern",
+    "Unknown"
+  ],
+  "sources": [
+    "b4e2",
+    "contextdp",
+    "hf_manual",
+    "hf_synthetic"
+  ],
+  "ignored": [
+    "cookiescanner"
+  ]
+}

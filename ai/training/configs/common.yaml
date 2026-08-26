@@ -1,0 +1,59 @@
+# Shared training defaults — merged into task-specific configs.
+# Hyperparameters must live here (or in overrides), never hardcoded in trainers.
+
+run_name: phase1_framework
+
+reproducibility:
+  seed: 42
+
+hardware:
+  device: auto  # auto | cpu | cuda | cuda:0
+
+paths:
+  data_dir: datasets/unified
+  output_root: ai/training/runs
+  logs_dirname: logs
+  models_dirname: models
+  reports_dirname: reports
+
+data:
+  label_field: label_binary  # label_binary | label_fine | label_consentshield
+  sources: null              # e.g. [huggingface_wipi, contextdp]
+  modalities: null
+  label_binary: null
+  label_fine: null
+  label_consentshield: null
+  max_samples: null          # optional cap for smoke tests
+  num_workers: 0
+  pin_memory: false
+  persistent_workers: false
+  drop_last: false
+
+train:
+  batch_size: 16
+  epochs: 5
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  optimizer: adamw           # adamw | adam | sgd
+  momentum: 0.9              # sgd only
+  scheduler: cosine          # none | cosine | step | linear
+  scheduler_step_size: 1
+  scheduler_gamma: 0.1
+  scheduler_end_factor: 0.0
+  max_grad_norm: 1.0
+  shuffle_train: true
+
+early_stopping:
+  monitor: val_loss
+  mode: min
+  patience: 3
+  min_delta: 0.0
+
+checkpoint:
+  monitor: val_f1
+  mode: max
+  best_name: best.pt
+  latest_name: latest.pt
+
+logging:
+  also_print: true

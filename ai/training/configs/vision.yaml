@@ -1,0 +1,24 @@
+# Vision / CLIP training config (Phase 3 will consume this).
+# Merged on top of common.yaml
+
+task: vision
+run_name: clip_binary
+
+model:
+  name: openai/clip-vit-base-patch32
+  image_size: 224
+  # Phase 3 may use image-only classification or image+text contrastive heads.
+
+data:
+  # Phase 1 dry-runs use path presence only (faster on OneDrive).
+  # Set true in Phase 3 training to drop missing files.
+  require_image_exists: false
+  sources: null
+
+train:
+  batch_size: 16
+  epochs: 5
+  learning_rate: 1.0e-5
+  weight_decay: 0.01
+  optimizer: adamw
+  scheduler: cosine

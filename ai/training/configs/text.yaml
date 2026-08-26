@@ -1,0 +1,46 @@
+# Text / MiniLM training config (Phase 2).
+# Merged on top of common.yaml
+
+task: text
+run_name: minilm
+
+model:
+  name: sentence-transformers/all-MiniLM-L6-v2
+  max_length: 256
+  dropout: 0.1
+  freeze_encoder: false
+
+paths:
+  data_dir: datasets/training
+  output_root: runs
+
+data:
+  sources: [hf_synthetic, hf_manual, contextdp]
+  label_field: label_binary
+  min_text_chars: 1
+  num_workers: 0
+  pin_memory: false
+
+train:
+  batch_size: 32
+  epochs: 5
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  optimizer: adamw
+  scheduler: cosine
+  max_grad_norm: 1.0
+  mixed_precision: true
+  shuffle_train: true
+  log_every_steps: 50
+
+early_stopping:
+  monitor: val_loss
+  mode: min
+  patience: 3
+  min_delta: 0.0
+
+checkpoint:
+  monitor: val_f1
+  mode: max
+  best_name: best.pt
+  latest_name: latest.pt

@@ -1,0 +1,53 @@
+[
+  {
+    "split": "train",
+    "num_samples": 9731,
+    "class_distribution": {
+      "dark_pattern": 4867,
+      "no_dark_pattern": 4864
+    },
+    "source_distribution": {
+      "hf_synthetic": 8409,
+      "hf_manual": 922,
+      "contextdp": 400
+    },
+    "avg_text_length": 608.95,
+    "median_text_length": 496.0,
+    "min_text_length": 3,
+    "max_text_length": 5841
+  },
+  {
+    "split": "val",
+    "num_samples": 1214,
+    "class_distribution": {
+      "dark_pattern": 607,
+      "no_dark_pattern": 607
+    },
+    "source_distribution": {
+      "hf_synthetic": 1050,
+      "contextdp": 49,
+      "hf_manual": 115
+    },
+    "avg_text_length": 603.33,
+    "median_text_length": 483.0,
+    "min_text_length": 9,
+    "max_text_length": 6594
+  },
+  {
+    "split": "test",
+    "num_samples": 1223,
+    "class_distribution": {
+      "no_dark_pattern": 612,
+      "dark_pattern": 611
+    },
+    "source_distribution": {
+      "hf_synthetic": 1055,
+      "hf_manual": 116,
+      "contextdp": 52
+    },
+    "avg_text_length": 607.81,
+    "median_text_length": 485.0,
+    "min_text_length": 14,
+    "max_text_length": 3678
+  }
+]

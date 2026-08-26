@@ -79,6 +79,18 @@ research/results/*
 !research/results/.gitkeep
 research/notebooks/.ipynb_checkpoints/
 
+# Large raw multimodal training corpora (keep README + download notes)
+datasets/raw/**
+!datasets/README.md
+!datasets/raw/**/DOWNLOAD_REQUIRED.txt
+!datasets/raw/**/.gitkeep
+
+# Unified processed corpus (large JSONL + OCR cache)
+datasets/unified/**
+!datasets/unified/.gitkeep
+!datasets/unified/preprocessing_report.md
+!datasets/unified/label_map.json
+
 # Docker volumes
 docker/data/
 
