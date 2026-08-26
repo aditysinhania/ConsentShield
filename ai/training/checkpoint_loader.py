@@ -10,6 +10,8 @@ from ai.training.datasets._helpers import REPO_ROOT
 
 
 DEFAULT_CHECKPOINT_CANDIDATES = (
+    Path("ai/training/runs/minilm/models/best_model.pt"),
+    Path("ai/training/runs/minilm/models/best.pt"),
     Path("runs/minilm/models/best_model.pt"),
     Path("runs/minilm/models/best.pt"),
     Path("models/text/best_model.pt"),
@@ -72,6 +74,7 @@ def load_minilm_classifier(
         num_labels=num_labels,
         dropout=float(model_cfg.get("dropout", 0.1)),
         freeze_encoder=bool(model_cfg.get("freeze_encoder", False)),
+        freeze_layers=int(model_cfg.get("freeze_layers", 0)),
     )
     state = ckpt.get("model_state_dict")
     if state is None:

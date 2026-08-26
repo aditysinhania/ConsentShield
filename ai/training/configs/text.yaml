@@ -9,10 +9,12 @@ model:
   max_length: 256
   dropout: 0.1
   freeze_encoder: false
+  # Freeze the first N MiniLM transformer layers (0 = train all).
+  freeze_layers: 4
 
 paths:
   data_dir: datasets/training
-  output_root: runs
+  output_root: ai/training/runs
 
 data:
   sources: [hf_synthetic, hf_manual, contextdp]

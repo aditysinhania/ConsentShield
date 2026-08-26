@@ -84,9 +84,8 @@ class BaseTrainer(ABC):
     def _assert_trainable(self) -> None:
         if not self.allow_train:
             raise PhaseGateError(
-                "Model training is disabled in Phase 1. "
-                "Re-run with --allow-train only after Phase 2/3 approval "
-                f"(task={self.task_name})."
+                "Training disabled: pass allow_train=True / CLI --allow-train. "
+                f"(task={self.task_name})"
             )
 
     def setup(self, *, num_labels: int, label_vocab: dict[str, int]) -> None:

@@ -99,11 +99,17 @@ docker/data/
 *.temp
 .DS_Store
 
-# AI model cache
-models/
+# AI model cache / weights (do not ignore Python packages named models/)
+/models/
+ai/training/runs/
 *.pt
 *.bin
 *.safetensors
+
+# Keep Phase 2 MiniLM classifier source trackable
+!ai/training/models/
+!ai/training/models/**/*.py
+!ai/training/models/**/__init__.py
 
 # HuggingFace cache
 .cache/

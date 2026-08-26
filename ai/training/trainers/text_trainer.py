@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import torch
 
+from ai.training.callbacks.checkpoint import load_checkpoint, save_checkpoint
 from ai.training.models.minilm_classifier import MiniLMClassifier, build_tokenizer, tokenize_batch
 from ai.training.trainers.base_trainer import BaseTrainer
 
@@ -27,19 +29,20 @@ class TextTrainer(BaseTrainer):
         self.max_length = int(model_cfg.get("max_length", 256))
         self.dropout = float(model_cfg.get("dropout", 0.1))
         self.freeze_encoder = bool(model_cfg.get("freeze_encoder", False))
+        self.freeze_layers = int(model_cfg.get("freeze_layers", 0))
         self.tokenizer = build_tokenizer(self.model_name, max_length=self.max_length)
         self.use_amp = bool((config.get("train") or {}).get("mixed_precision", True)) and (
             str(self.device).startswith("cuda")
         )
         self.scaler = None
         if self.use_amp:
-            # torch.amp.GradScaler is preferred on recent PyTorch builds
             try:
                 self.scaler = torch.amp.GradScaler("cuda", enabled=True)
             except Exception:
                 self.scaler = torch.cuda.amp.GradScaler(enabled=True)
         self.criterion = torch.nn.CrossEntropyLoss()
         self._last_val_details: dict[str, Any] = {}
+        self._global_step = 0
 
     def build_model(self, num_labels: int) -> MiniLMClassifier:
         return MiniLMClassifier(
@@ -47,6 +50,7 @@ class TextTrainer(BaseTrainer):
             num_labels=num_labels,
             dropout=self.dropout,
             freeze_encoder=self.freeze_encoder,
+            freeze_layers=self.freeze_layers,
         )
 
     def _encode(self, batch: dict[str, Any]) -> tuple[dict[str, torch.Tensor], torch.Tensor]:
@@ -60,7 +64,7 @@ class TextTrainer(BaseTrainer):
         )
         return encoded, labels
 
-    def training_step(self, batch: Any) -> tuple[Any, float]:
+    def _forward(self, batch: Any) -> dict[str, Any]:
         assert self.model is not None
         encoded, labels = self._encode(batch)
         if self.use_amp:
@@ -70,39 +74,77 @@ class TextTrainer(BaseTrainer):
                     attention_mask=encoded["attention_mask"],
                     labels=labels,
                 )
-                loss = out["loss"]
         else:
             out = self.model(
                 input_ids=encoded["input_ids"],
                 attention_mask=encoded["attention_mask"],
                 labels=labels,
             )
-            loss = out["loss"]
+        out["_labels"] = labels
+        return out
+
+    def training_step(self, batch: Any) -> tuple[Any, float]:
+        out = self._forward(batch)
+        loss = out["loss"]
         return loss, float(loss.detach().item())
 
+    def validation_step(self, batch: Any) -> dict[str, Any]:
+        """One validation batch: loss, predictions, labels, ids."""
+        out = self._forward(batch)
+        labels = out["_labels"]
+        preds = torch.argmax(out["logits"], dim=-1)
+        return {
+            "loss": float(out["loss"].detach().item()) if out["loss"] is not None else 0.0,
+            "y_true": labels.detach().cpu().tolist(),
+            "y_pred": preds.detach().cpu().tolist(),
+            "ids": [str(x) for x in batch.get("ids", [])],
+            "probs": out["probs"].detach().cpu(),
+        }
+
     def predict_batch(self, batch: Any) -> tuple[list[Any], list[Any], list[str]]:
-        assert self.model is not None
-        encoded, labels = self._encode(batch)
-        if self.use_amp:
-            with torch.autocast(device_type="cuda", dtype=torch.float16):
-                out = self.model(
-                    input_ids=encoded["input_ids"],
-                    attention_mask=encoded["attention_mask"],
-                    labels=labels,
-                )
-        else:
-            out = self.model(
-                input_ids=encoded["input_ids"],
-                attention_mask=encoded["attention_mask"],
-                labels=labels,
-            )
-        logits = out["logits"]
-        preds = torch.argmax(logits, dim=-1)
-        # Stash loss for evaluate()
+        result = self.validation_step(batch)
         if isinstance(batch, dict):
-            batch["_loss"] = float(out["loss"].detach().item()) if out["loss"] is not None else 0.0
-        ids = [str(x) for x in batch.get("ids", [])]
-        return labels.detach().cpu().tolist(), preds.detach().cpu().tolist(), ids
+            batch["_loss"] = result["loss"]
+        return result["y_true"], result["y_pred"], result["ids"]
+
+    def save_checkpoint(
+        self,
+        path: str | Path,
+        *,
+        epoch: int = 0,
+        metrics: dict[str, float] | None = None,
+        best_metric: float | None = None,
+    ) -> Path:
+        """Persist model + optimizer + scheduler + config for resume / ModelRegistry."""
+        return save_checkpoint(
+            path,
+            model=self.model,
+            optimizer=self.optimizer,
+            scheduler=self.scheduler,
+            epoch=epoch,
+            global_step=self._global_step,
+            best_metric=best_metric,
+            metrics=metrics or {},
+            config=self.config,
+            label_vocab=self.label_vocab,
+        )
+
+    def load_checkpoint(self, path: str | Path, *, map_location: str | None = None) -> dict[str, Any]:
+        """Load weights (and optimizer/scheduler when present) from a checkpoint file."""
+        ckpt = load_checkpoint(path, map_location=map_location or self.device)
+        if self.model is not None and "model_state_dict" in ckpt:
+            self.model.load_state_dict(ckpt["model_state_dict"])
+        if self.optimizer is not None and "optimizer_state_dict" in ckpt:
+            self.optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+        if self.scheduler is not None and "scheduler_state_dict" in ckpt:
+            try:
+                self.scheduler.load_state_dict(ckpt["scheduler_state_dict"])
+            except Exception:
+                pass
+        if ckpt.get("label_vocab"):
+            self.label_vocab = dict(ckpt["label_vocab"])
+        self._global_step = int(ckpt.get("global_step") or 0)
+        return ckpt
 
     def _run_train_epoch(self, loader: Any) -> float:
         """Override to support mixed-precision GradScaler + step progress logs."""
@@ -130,6 +172,7 @@ class TextTrainer(BaseTrainer):
                 self.optimizer.step()
             total += loss_value
             n += 1
+            self._global_step += 1
             if log_every > 0 and (n % log_every == 0 or n == total_steps):
                 self.logger.log_event(
                     "train_step",
@@ -155,12 +198,11 @@ class TextTrainer(BaseTrainer):
         losses: list[float] = []
         with torch.no_grad():
             for batch in loader:
-                yt, yp, batch_ids = self.predict_batch(batch)
-                y_true.extend(yt)
-                y_pred.extend(yp)
-                ids.extend(batch_ids)
-                if isinstance(batch, dict) and "_loss" in batch:
-                    losses.append(float(batch["_loss"]))
+                step = self.validation_step(batch)
+                y_true.extend(step["y_true"])
+                y_pred.extend(step["y_pred"])
+                ids.extend(step["ids"])
+                losses.append(float(step["loss"]))
 
         metrics = compute_classification_metrics(y_true, y_pred)
         metrics["loss"] = sum(losses) / len(losses) if losses else 0.0
