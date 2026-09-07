@@ -117,11 +117,27 @@ function pct(v: unknown): string {
 }
 
 export function modelsUsed(report: ExplainableReport): string[] {
+  const fromReport = (report as { models_used?: string[] }).models_used;
+  if (Array.isArray(fromReport) && fromReport.length > 0) {
+    return fromReport;
+  }
   const models: string[] = ["Rule Engine"];
-  const text = report.text as { status?: string } | null | undefined;
+  const text = report.text as {
+    status?: string;
+    backend?: string;
+    message?: string;
+  } | null | undefined;
   const vision = report.vision as { status?: string } | null | undefined;
-  if (text?.status === "ready") models.push("Sentence Transformer");
-  else if (text?.status === "not_loaded") models.push("NLP (stub)");
+  if (text?.status === "ready") {
+    const blob = `${text.backend || ""} ${text.message || ""}`;
+    if (/finetuned.?minilm|Fine-tuned MiniLM/i.test(blob)) {
+      models.push("NLP (Fine-tuned MiniLM)");
+    } else {
+      models.push("Sentence Transformer");
+    }
+  } else if (text?.status === "not_loaded") {
+    models.push("NLP (stub)");
+  }
   if (vision?.status === "ready") models.push("CLIP");
   else if (vision?.status === "not_loaded") models.push("Vision (stub)");
   models.push("Fusion");

@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     EMBEDDING_BATCH_SIZE: int = 16
     CACHE_MODELS: bool = True
     PHASE4_BACKEND: str = "auto"
+    MINILM_CHECKPOINT: str = "./models/checkpoints/minilm/best_model.pt"
 
     AI_PROVIDER: str = "offline"
     GEMINI_API_KEY: str = ""

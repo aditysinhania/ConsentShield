@@ -46,7 +46,7 @@ def _dom_supports_ai(dom: dict[str, Any]) -> bool:
 
 class FusionEngine(BaseDetector[FusionInput, PredictionResult]):
     name = "fusion_engine"
-    version = "0.4.0"
+    version = "0.5.0"
 
     def __init__(self) -> None:
         self._clf = FusionClassifier()
@@ -107,40 +107,63 @@ class FusionEngine(BaseDetector[FusionInput, PredictionResult]):
 
         confidence = min(0.95, 0.35 + 0.1 * len(rules.hits)) if rules.hits else 0.7
 
-        # AI may increase confidence when grounded in DOM + agreeing with rules
+        # MiniLM confidence may corroborate rule hits / boost confidence only.
+        # Never invent high risk without supporting evidence (rules or grounded DOM).
         nlp_ready = inputs.text and inputs.text.status == "ready"
         vision_ready = inputs.vision and inputs.vision.status == "ready"
         grounded = _dom_supports_ai(inputs.dom_features or {})
+        nlp_conf = float(inputs.text.confidence or 0.0) if nlp_ready else 0.0
+        nlp_dark = bool(
+            nlp_ready
+            and inputs.text.category
+            and inputs.text.category != Category.NO_DARK_PATTERN
+            and nlp_conf >= 0.55
+        )
 
         if grounded and rules.hits:
-            if nlp_ready and inputs.text.confidence:
-                confidence = min(0.95, confidence + 0.08 * float(inputs.text.confidence))
+            if nlp_ready and nlp_conf:
+                confidence = min(0.95, confidence + 0.10 * nlp_conf)
             if vision_ready and inputs.vision.banner_detected:
                 confidence = min(0.95, confidence + 0.05)
 
-        # AI must not invent violations: never raise risk above rules when no hits
         # Soft corroboration only when rules already fired and AI agrees
         if rules.hits and grounded:
             ai_boost = 0.0
-            if nlp_ready and inputs.text.category and inputs.text.category != Category.NO_DARK_PATTERN:
+            if nlp_dark:
                 if inputs.text.category.value in rules.categories_triggered or any(
                     "cookie" in c.lower() or "consent" in c.lower() for c in rules.categories_triggered
                 ):
-                    ai_boost += 2.0 * float(inputs.text.confidence or 0.0)
+                    ai_boost += 2.5 * nlp_conf
             if vision_ready and inputs.vision.banner_detected:
                 ai_boost += 1.5
             risk = min(100.0, risk + ai_boost)
+
+        # Text-only dark patterns: DOM-grounded MiniLM signal, no rule hits.
+        # Cap risk low — never invent high risk without rule corroboration.
+        elif not rules.hits and grounded and nlp_dark and nlp_conf >= 0.70:
+            category = inputs.text.category or Category.UNKNOWN
+            risk = min(22.0, 8.0 + 12.0 * nlp_conf)
+            confidence = min(0.70, 0.40 + 0.30 * nlp_conf)
+            notes.append(
+                "Text-only Fine-tuned MiniLM signal (DOM-grounded; low risk until rules corroborate)."
+            )
 
         confidence = round(confidence, 3)
         breakdown = compute_confidence_breakdown(inputs, final_confidence=confidence)
 
         ai_bits = []
         if nlp_ready:
-            ai_bits.append("nlp")
+            backend = getattr(inputs.text, "backend", None) or "nlp"
+            ai_bits.append("minilm" if backend == "finetuned_minilm" else "nlp")
         if vision_ready:
             ai_bits.append("vision")
         if ai_bits and rules.hits:
             message = f"Fusion rule-dominant with AI assist ({'+'.join(ai_bits)})."
+        elif ai_bits and not rules.hits and nlp_dark:
+            message = (
+                f"Fusion text-only MiniLM assist ({'+'.join(ai_bits)}); "
+                "rules remain source of truth for high risk."
+            )
         elif ai_bits:
             message = f"Fusion using rules; AI channels ready ({'+'.join(ai_bits)}) without overriding risk."
         elif notes:

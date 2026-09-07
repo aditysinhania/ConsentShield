@@ -35,8 +35,8 @@ def _detect_banner_cmp(payload: ScanPayload, timeline: TimelineRecorder) -> None
 
 class InferencePipeline:
     """
-    Chrome Extension payload → Rules + Vision + Text → Fusion → Explanation.
-    Rules remain source of truth; Phase 4 models are assistive via ModelRegistry.
+    Chrome Extension payload → Rules → Fine-tuned MiniLM → Vision → Fusion → Explanation.
+    Rules remain source of truth; MiniLM / CLIP are assistive via ModelRegistry.
     """
 
     def __init__(self, registry: ModelRegistry | None = None) -> None:
@@ -69,10 +69,10 @@ class InferencePipeline:
             rule_result = self.rules.evaluate_payload(payload)
         tl.mark(TimelineEventName.RULE_ENGINE, metadata={"hits": len(rule_result.hits)})
 
-        with perf.measure("vision"):
-            vision_features = self.vision.extract_features(payload)
         with perf.measure("text"):
             text_pred = self.text.classify(payload)
+        with perf.measure("vision"):
+            vision_features = self.vision.extract_features(payload)
 
         with perf.measure(MetricStage.FUSION):
             fusion_out = self.fusion.fuse(

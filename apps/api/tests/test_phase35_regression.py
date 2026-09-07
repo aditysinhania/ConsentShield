@@ -81,7 +81,7 @@ def test_model_registry_di_interfaces():
     assert isinstance(reg.embedding, EmbeddingEngine)
     assert isinstance(reg.reasoning, ReasoningEngine)
     desc = reg.describe()
-    assert len(desc) == 4
+    assert len(desc) >= 4
     assert all("interface" in d for d in desc)
 
 

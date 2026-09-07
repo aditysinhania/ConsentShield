@@ -108,8 +108,13 @@ def export_markdown(document: ReportDocument) -> str:
         contrib = ai.get("fusion_contribution") or {}
         lines.append(ai.get("note") or "AI assistive findings.")
         lines.append(
-            f"- NLP status: `{nlp.get('status')}` · confidence: {nlp.get('confidence')}"
+            f"- NLP status: `{nlp.get('status')}` · predicted: `{nlp.get('predicted_class')}` · "
+            f"confidence: {nlp.get('confidence')}"
         )
+        top3 = nlp.get("top_3_class_probabilities") or []
+        if top3:
+            bits = ", ".join(f"{t.get('class')}={t.get('probability')}" for t in top3 if isinstance(t, dict))
+            lines.append(f"- Top 3 class probabilities: {bits}")
         lines.append(
             f"- Vision status: `{vision.get('status')}` · confidence: "
             f"{(ai.get('model_confidence') or {}).get('vision')}"
@@ -119,11 +124,16 @@ def export_markdown(document: ReportDocument) -> str:
             f"nlp: {contrib.get('nlp')}, vision: {contrib.get('vision')}, "
             f"fusion: {contrib.get('fusion')}"
         )
+        models = ai.get("models_used") or []
+        if models:
+            lines.append(f"- Models used: {', '.join(str(m) for m in models)}")
         for f in (nlp.get("findings") or [])[:8]:
             if isinstance(f, dict):
+                pattern = f.get("predicted_pattern") or f.get("predicted_class")
                 lines.append(
-                    f"- Pattern `{f.get('predicted_pattern')}` "
-                    f"(sim={f.get('embedding_similarity')}) ← {f.get('matched_example')}"
+                    f"- Pattern `{pattern}` "
+                    f"(sim={f.get('embedding_similarity')}, conf={f.get('confidence')}) "
+                    f"← {f.get('matched_example') or f.get('source_text')}"
                 )
     else:
         lines.append("_AI analysis unavailable (stub mode or models not loaded)._")
@@ -247,14 +257,23 @@ def _ai_analysis_html(document: ReportDocument) -> str:
     )
     findings = nlp.get("findings") or []
     find_rows = "".join(
-        f"<tr><td>{_esc(f.get('predicted_pattern'))}</td><td>{_esc(f.get('confidence'))}</td>"
-        f"<td>{_esc(f.get('matched_example'))}</td></tr>"
+        f"<tr><td>{_esc(f.get('predicted_pattern') or f.get('predicted_class'))}</td>"
+        f"<td>{_esc(f.get('confidence'))}</td>"
+        f"<td>{_esc(f.get('matched_example') or (str(f.get('source_text') or '')[:80]))}</td></tr>"
         for f in findings[:8]
         if isinstance(f, dict)
     )
+    top3 = nlp.get("top_3_class_probabilities") or []
+    top3_txt = ", ".join(
+        f"{t.get('class')}={t.get('probability')}" for t in top3 if isinstance(t, dict)
+    )
+    models_txt = ", ".join(str(m) for m in (ai.get("models_used") or []))
     return f"""
 <p>{_esc(ai.get('note') or '')}</p>
-<p><strong>NLP:</strong> {_esc(nlp.get('status'))} · confidence {_esc(nlp.get('confidence'))}</p>
+<p><strong>Models used:</strong> {_esc(models_txt or '—')}</p>
+<p><strong>NLP:</strong> {_esc(nlp.get('name') or nlp.get('status'))} · predicted {_esc(nlp.get('predicted_class'))} ·
+confidence {_esc(nlp.get('confidence'))}</p>
+<p><strong>Top 3 probabilities:</strong> {_esc(top3_txt or '—')}</p>
 <p><strong>Vision:</strong> {_esc(vision.get('status'))} · confidence {_esc((ai.get('model_confidence') or {}).get('vision'))}</p>
 <p><strong>Fusion contribution</strong> — rules {_esc(contrib.get('rules'))} · nlp {_esc(contrib.get('nlp'))} ·
 vision {_esc(contrib.get('vision'))} · fusion {_esc(contrib.get('fusion'))}</p>

@@ -131,6 +131,11 @@ class TextPrediction(BaseModel):
     confidence: float | None = None
     evidence_spans: list[dict[str, Any]] = Field(default_factory=list)
     message: str | None = None
+    # Phase 2.5 optional fields (backward compatible)
+    backend: str | None = None
+    predicted_class: str | None = None
+    class_probabilities: dict[str, float] = Field(default_factory=dict)
+    logits: list[float] = Field(default_factory=list)
 
 
 class RuleHit(BaseModel):
@@ -195,6 +200,7 @@ class ExplainableReport(BaseModel):
     pipeline_notes: list[str] = Field(default_factory=list)
     debug: dict[str, Any] | None = None
     ai_analysis: dict[str, Any] | None = None
+    models_used: list[str] = Field(default_factory=list)
 
 
 class PredictionResult(BaseModel):

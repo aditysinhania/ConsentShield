@@ -10,6 +10,7 @@ from ai.training.datasets._helpers import REPO_ROOT
 
 
 DEFAULT_CHECKPOINT_CANDIDATES = (
+    Path("models/checkpoints/minilm/best_model.pt"),
     Path("ai/training/runs/minilm/models/best_model.pt"),
     Path("ai/training/runs/minilm/models/best.pt"),
     Path("runs/minilm/models/best_model.pt"),
@@ -24,10 +25,18 @@ def resolve_minilm_checkpoint(explicit: str | Path | None = None) -> Path | None
 
     Order: explicit arg → MINILM_CHECKPOINT env → default candidates.
     Returns None if nothing exists (inference keeps pretrained/stub behavior).
+    When ``explicit`` is set, only that path is tried (no silent fallback).
     """
+    if explicit is not None:
+        raw = str(explicit).strip()
+        if raw.lower() in ("", "none", "disabled", "__disabled__"):
+            return None
+        p = Path(raw).expanduser()
+        if not p.is_absolute():
+            p = (REPO_ROOT / p).resolve()
+        return p if p.is_file() else None
+
     candidates: list[Path] = []
-    if explicit:
-        candidates.append(Path(explicit))
     env = os.getenv("MINILM_CHECKPOINT")
     if env:
         candidates.append(Path(env))

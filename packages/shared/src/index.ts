@@ -141,6 +141,7 @@ export interface ExplainableReport {
   pipeline_notes?: string[];
   debug?: Record<string, unknown> | null;
   ai_analysis?: Record<string, unknown> | null;
+  models_used?: string[];
   screenshot_path?: string | null;
   annotated_screenshot_path?: string | null;
 }

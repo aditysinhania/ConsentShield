@@ -17,6 +17,7 @@ class Phase4ModelConfig:
     cache_models: bool
     stub_mode: bool
     backend: str  # auto | pretrained | lexical
+    minilm_checkpoint: str
 
     @classmethod
     def from_env(cls) -> Phase4ModelConfig:
@@ -44,6 +45,10 @@ class Phase4ModelConfig:
                 cache_models=bool(settings.CACHE_MODELS),
                 stub_mode=stub,
                 backend=backend if backend in ("auto", "pretrained", "lexical") else "auto",
+                minilm_checkpoint=str(
+                    getattr(settings, "MINILM_CHECKPOINT", None)
+                    or "./models/checkpoints/minilm/best_model.pt"
+                ),
             )
         except Exception:
             pass
@@ -69,6 +74,10 @@ class Phase4ModelConfig:
             cache_models=os.getenv("CACHE_MODELS", "true").lower() in ("1", "true", "yes", "on"),
             stub_mode=stub,
             backend=backend if backend in ("auto", "pretrained", "lexical") else "auto",
+            minilm_checkpoint=os.getenv(
+                "MINILM_CHECKPOINT",
+                "./models/checkpoints/minilm/best_model.pt",
+            ),
         )
 
     @property
