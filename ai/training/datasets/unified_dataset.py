@@ -120,6 +120,8 @@ class UnifiedDataset(Dataset):
             "label_binary": sample.get("label_binary"),
             "label_fine": sample.get("label_fine"),
             "label_consentshield": sample.get("label_consentshield"),
+            "label_vision": sample.get("label_vision"),
+            "sample_weight": float(sample.get("sample_weight") or 1.0),
             "source_labels": sample.get("source_labels") or [],
             "bboxes": sample.get("bboxes") or [],
             "components": sample.get("components") or [],

@@ -9,7 +9,7 @@ from typing import Any, Iterable, Sequence
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_UNIFIED_DIR = REPO_ROOT / "datasets" / "unified"
 
-LABEL_FIELDS = ("label_binary", "label_fine", "label_consentshield")
+LABEL_FIELDS = ("label_binary", "label_fine", "label_consentshield", "label_vision")
 
 
 def resolve_repo_path(path: str | Path | None, *, repo_root: Path | None = None) -> Path | None:

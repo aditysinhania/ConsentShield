@@ -23,16 +23,23 @@ def collate_text_batch(batch: Sequence[dict[str, Any]]) -> dict[str, Any]:
 
 
 def collate_image_batch(batch: Sequence[dict[str, Any]]) -> dict[str, Any]:
-    """Collate image samples (paths); pixel tensors added in Phase 3."""
-    return {
+    """Collate image samples; stacks pixel_values when present (Phase 3)."""
+    out: dict[str, Any] = {
         "ids": [b["id"] for b in batch],
         "image_paths": [b.get("image_path") for b in batch],
         "texts": [b.get("usable_text") or "" for b in batch],
         "label_ids": [int(b["label_id"]) for b in batch],
         "labels": [b["label"] for b in batch],
         "sources": [b.get("source") for b in batch],
+        "sample_weights": [float(b.get("sample_weight") or 1.0) for b in batch],
         "metadata": [b.get("metadata") or {} for b in batch],
     }
+    pixels = [b.get("pixel_values") for b in batch]
+    if pixels and all(p is not None for p in pixels):
+        import torch
+
+        out["pixel_values"] = torch.stack(pixels, dim=0)
+    return out
 
 
 def create_dataloader(
@@ -45,6 +52,7 @@ def create_dataloader(
     persistent_workers: bool = False,
     drop_last: bool = False,
     collate_fn: Callable | None = None,
+    sampler: Any | None = None,
 ):
     """Build a reusable PyTorch DataLoader with production-friendly defaults."""
     try:
@@ -56,10 +64,13 @@ def create_dataloader(
 
     if num_workers <= 0:
         persistent_workers = False
+    if sampler is not None:
+        shuffle = False
     return DataLoader(
         dataset,
         batch_size=batch_size,
         shuffle=shuffle,
+        sampler=sampler,
         num_workers=num_workers,
         pin_memory=pin_memory,
         persistent_workers=persistent_workers,

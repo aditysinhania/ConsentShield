@@ -1,24 +1,51 @@
-# Vision / CLIP training config (Phase 3 will consume this).
+# Vision / CLIP fine-tuning (Phase 3).
 # Merged on top of common.yaml
 
 task: vision
-run_name: clip_binary
+run_name: clip
 
 model:
   name: openai/clip-vit-base-patch32
   image_size: 224
-  # Phase 3 may use image-only classification or image+text contrastive heads.
+  dropout: 0.1
+  freeze_text_encoder: true
+  freeze_projection: true
+
+paths:
+  data_dir: datasets/training/vision
+  output_root: ai/training/runs
+  export_dir: models/checkpoints/clip
+  report_md: runs/clip_training/report.md
 
 data:
-  # Phase 1 dry-runs use path presence only (faster on OneDrive).
-  # Set true in Phase 3 training to drop missing files.
-  require_image_exists: false
+  label_field: label_vision
+  require_image_exists: true
   sources: null
+  use_sample_weights: true
+  num_workers: 0
+  pin_memory: true
 
 train:
-  batch_size: 16
+  batch_size: 32
   epochs: 5
-  learning_rate: 1.0e-5
+  learning_rate: 2.0e-5
   weight_decay: 0.01
   optimizer: adamw
   scheduler: cosine
+  mixed_precision: true
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  shuffle_train: true
+  log_every_steps: 20
+
+early_stopping:
+  monitor: val_macro_f1
+  mode: max
+  patience: 2
+  min_delta: 0.0
+
+checkpoint:
+  monitor: val_macro_f1
+  mode: max
+  best_name: best.pt
+  latest_name: latest.pt

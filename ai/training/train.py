@@ -319,7 +319,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument(
         "--allow-train",
         action="store_true",
-        help="Run real MiniLM training (text task). Vision remains Phase-3 gated.",
+        help="Run real training (text=MiniLM Phase 2, vision=CLIP Phase 3).",
     )
     p.add_argument("--run-name", type=str, default=None)
     p.add_argument("--max-samples", type=int, default=None, help="Cap dataset size (smoke tests)")
@@ -355,12 +355,18 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.task in ("vision", "image", "clip"):
-        print(
-            "ERROR: Vision/CLIP training is still Phase-3 gated.\n"
-            "Use --task text --allow-train for MiniLM Phase 2.",
-            file=sys.stderr,
-        )
-        return 2
+        from ai.training.train_clip import main as train_clip_main
+
+        clip_argv: list[str] = []
+        if args.config:
+            clip_argv.extend(["--config", args.config])
+        if args.epochs is not None:
+            clip_argv.extend(["--epochs", str(args.epochs)])
+        if args.batch_size is not None:
+            clip_argv.extend(["--batch-size", str(args.batch_size)])
+        if args.max_samples is not None:
+            clip_argv.extend(["--max-samples", str(args.max_samples)])
+        return train_clip_main(clip_argv)
 
     if args.task == "unified":
         print("ERROR: --allow-train requires --task text for MiniLM.", file=sys.stderr)

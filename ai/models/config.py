@@ -18,6 +18,8 @@ class Phase4ModelConfig:
     stub_mode: bool
     backend: str  # auto | pretrained | lexical
     minilm_checkpoint: str
+    clip_checkpoint: str
+    clip_finetuned_enabled: bool
 
     @classmethod
     def from_env(cls) -> Phase4ModelConfig:
@@ -49,6 +51,13 @@ class Phase4ModelConfig:
                     getattr(settings, "MINILM_CHECKPOINT", None)
                     or "./models/checkpoints/minilm/best_model.pt"
                 ),
+                clip_checkpoint=str(
+                    getattr(settings, "CLIP_CHECKPOINT", None)
+                    or "./models/checkpoints/clip/best_model.pt"
+                ),
+                clip_finetuned_enabled=bool(
+                    getattr(settings, "CLIP_FINETUNED_ENABLED", False)
+                ),
             )
         except Exception:
             pass
@@ -78,6 +87,12 @@ class Phase4ModelConfig:
                 "MINILM_CHECKPOINT",
                 "./models/checkpoints/minilm/best_model.pt",
             ),
+            clip_checkpoint=os.getenv(
+                "CLIP_CHECKPOINT",
+                "./models/checkpoints/clip/best_model.pt",
+            ),
+            clip_finetuned_enabled=os.getenv("CLIP_FINETUNED_ENABLED", "false").lower()
+            in ("1", "true", "yes", "on"),
         )
 
     @property

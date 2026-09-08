@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Callable, Sequence
 
 from ai.training.datasets._helpers import has_image
 from ai.training.datasets.unified_dataset import UnifiedDataset
@@ -13,7 +13,7 @@ class ImageDataset(UnifiedDataset):
     """
     Subset of UnifiedDataset with resolvable image paths.
 
-    Intended for Phase 3 CLIP fine-tuning.
+    Optional ``transform`` converts PIL → tensor for Phase 3 CLIP training.
     """
 
     def __init__(
@@ -32,8 +32,10 @@ class ImageDataset(UnifiedDataset):
         repo_root: str | Path | None = None,
         max_samples: int | None = None,
         require_image_exists: bool = True,
+        transform: Callable[[Any], Any] | None = None,
     ) -> None:
         self.require_image_exists = bool(require_image_exists)
+        self.transform = transform
         super().__init__(
             split,
             data_dir=data_dir,
@@ -61,8 +63,15 @@ class ImageDataset(UnifiedDataset):
             self.label_vocab = build_label_vocab(s[self.label_field] for s in self.samples)
             self.id2label = {i: lab for lab, i in self.label_vocab.items()}
 
+    def sample_weights(self) -> list[float]:
+        return [float(s.get("sample_weight") or 1.0) for s in self.samples]
+
     def __getitem__(self, index: int) -> dict[str, Any]:
         item = super().__getitem__(index)
-        # Vision trainers may load PIL/tensor later; path is enough for Phase 1.
         item["image"] = item["image_path"]
+        if self.transform is not None and item.get("image_path"):
+            from ai.training.datasets.image_transforms import load_rgb_image
+
+            pil = load_rgb_image(item["image_path"])
+            item["pixel_values"] = self.transform(pil)
         return item
