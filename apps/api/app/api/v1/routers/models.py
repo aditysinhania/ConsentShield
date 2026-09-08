@@ -33,22 +33,45 @@ def _text_model_payload(registry: ModelRegistry) -> dict:
     }
 
 
+def _vision_model_payload(registry: ModelRegistry) -> dict:
+    clip = registry.finetuned_clip_status()
+    vision_ready = registry.vision.is_ready()
+    if clip.get("loaded"):
+        return {
+            "name": "Fine-tuned CLIP",
+            "status": "loaded",
+            "enabled": True,
+            "checkpoint": clip.get("checkpoint") or settings.CLIP_CHECKPOINT,
+            "model_version": clip.get("model_version"),
+            "device": clip.get("inference_device") or settings.DEVICE,
+            "priority": clip.get("priority")
+            or ["finetuned_clip", "pretrained_clip", "lexical"],
+        }
+    return {
+        "name": "Fine-tuned CLIP" if clip.get("status") == "available_disabled" else "CLIP / Stub",
+        "status": clip.get("status")
+        or ("loaded" if vision_ready else "not_loaded"),
+        "enabled": bool(clip.get("enabled")),
+        "checkpoint": clip.get("checkpoint") or settings.CLIP_CHECKPOINT,
+        "model": settings.VISION_MODEL_NAME,
+        "device": clip.get("inference_device") or settings.DEVICE,
+        "note": clip.get("note"),
+        "priority": ["finetuned_clip", "pretrained_clip", "lexical"],
+    }
+
+
 @router.get("")
 @router.get("/")
 async def models_status() -> dict:
-    """Phase 2.5 model status (Fine-tuned MiniLM primary text model)."""
+    """Model status (MiniLM text + CLIP vision)."""
     pipe = get_pipeline()
     registry = getattr(pipe, "registry", None) or ModelRegistry.default()
-    vision_ready = registry.vision.is_ready()
     return {
         "text_model": _text_model_payload(registry),
-        "vision_model": {
-            "name": "CLIP / Stub",
-            "status": "loaded" if vision_ready else "not_loaded",
-            "model": settings.VISION_MODEL_NAME,
-        },
+        "vision_model": _vision_model_payload(registry),
         "stub_mode": settings.AI_STUB_MODE,
         "phase4_backend": settings.PHASE4_BACKEND,
+        "clip_finetuned_enabled": settings.CLIP_FINETUNED_ENABLED,
     }
 
 
@@ -67,8 +90,11 @@ async def model_registry() -> dict:
             "cache_models": settings.CACHE_MODELS,
             "models_root": settings.MODELS_ROOT,
             "minilm_checkpoint": settings.MINILM_CHECKPOINT,
+            "clip_checkpoint": settings.CLIP_CHECKPOINT,
+            "clip_finetuned_enabled": settings.CLIP_FINETUNED_ENABLED,
         },
         "text_model": _text_model_payload(registry),
+        "vision_model": _vision_model_payload(registry),
         "interfaces": registry.describe(),
         "modules": [
             {

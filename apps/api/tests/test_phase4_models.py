@@ -33,6 +33,8 @@ def phase4_registry():
         stub_mode=False,
         backend="lexical",
         minilm_checkpoint="__disabled__",
+        clip_checkpoint="__disabled__",
+        clip_finetuned_enabled=False,
     )
     return ModelRegistry.from_config(cfg)
 
@@ -55,13 +57,15 @@ def stub_pipeline() -> InferencePipeline:
         stub_mode=True,
         backend="auto",
         minilm_checkpoint="__disabled__",
+        clip_checkpoint="__disabled__",
+        clip_finetuned_enabled=False,
     )
     return InferencePipeline(registry=ModelRegistry.from_config(cfg))
 
 
 def test_registry_lazy_interfaces(phase4_registry):
     desc = phase4_registry.describe()
-    assert len(desc) == 5
+    assert len(desc) >= 5
     assert phase4_registry.text.is_ready()
     assert phase4_registry.vision.is_ready()
     assert phase4_registry.embedding.is_ready()

@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     CACHE_MODELS: bool = True
     PHASE4_BACKEND: str = "auto"
     MINILM_CHECKPOINT: str = "./models/checkpoints/minilm/best_model.pt"
+    CLIP_CHECKPOINT: str = "./models/checkpoints/clip/best_model.pt"
+    CLIP_FINETUNED_ENABLED: bool = True
 
     AI_PROVIDER: str = "offline"
     GEMINI_API_KEY: str = ""

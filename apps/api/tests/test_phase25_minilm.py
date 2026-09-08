@@ -46,6 +46,8 @@ def minilm_registry() -> ModelRegistry:
         stub_mode=False,
         backend="lexical",
         minilm_checkpoint=str(CHECKPOINT),
+        clip_checkpoint="__disabled__",
+        clip_finetuned_enabled=False,
     )
     return ModelRegistry.from_config(cfg)
 
@@ -113,6 +115,8 @@ def test_fallback_when_checkpoint_missing():
         stub_mode=False,
         backend="lexical",
         minilm_checkpoint="models/checkpoints/minilm/does_not_exist.pt",
+        clip_checkpoint="__disabled__",
+        clip_finetuned_enabled=False,
     )
     reg = ModelRegistry.from_config(cfg)
     assert reg.finetuned_status()["loaded"] is False
